@@ -136,16 +136,21 @@ function evidenceFrom(content: string, category: string, fallback: string): stri
   return best ? best.slice(0, 190) : null;
 }
 
-function providerImage(metadata: any, origin: string) {
+function providerImage(metadata: any, branding: any, origin: string) {
   const raw =
+    branding?.images?.logo ||
+    branding?.images?.favicon ||
+    branding?.images?.ogImage ||
     metadata?.ogImage ||
     metadata?.["og:image"] ||
     metadata?.twitterImage ||
     metadata?.["twitter:image"] ||
     metadata?.image;
   if (!raw) return undefined;
+  const value = String(raw);
+  if (/^data:image\//i.test(value)) return value;
   try {
-    const url = new URL(String(raw), origin);
+    const url = new URL(value, origin);
     return /^https?:$/.test(url.protocol) ? url.toString() : undefined;
   } catch {
     return undefined;
@@ -171,7 +176,7 @@ async function scrape(url: string) {
   try {
     return await firecrawl("/scrape", {
       url,
-      formats: ["markdown"],
+      formats: ["markdown", "branding"],
       onlyMainContent: true,
       maxAge: 86_400_000,
     });
@@ -255,7 +260,7 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
     }
 
     const name = providerName(title, domain, page?.metadata);
-    const imageUrl = providerImage(page?.metadata, resultUrl.origin);
+    const imageUrl = providerImage(page?.metadata, page?.branding, resultUrl.origin);
 
     people.push({
       name: name.slice(0, 90),
