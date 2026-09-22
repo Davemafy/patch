@@ -42,22 +42,10 @@ type RepairView = {
 };
 
 function money(amount: number | null, currency: string | null) {
-  if (amount == null) return "Price not stated";
+  if (amount == null) return "Not stated";
   if ((currency || "").toUpperCase() === "NGN") return `₦${amount.toLocaleString("en-NG")}`;
   if (currency) return `${currency.toUpperCase()} ${amount.toLocaleString()}`;
   return amount.toLocaleString();
-}
-
-function Logo() {
-  return <div className="brand">Patch<span>.</span></div>;
-}
-
-function ArrowIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" /></svg>;
-}
-
-function CheckIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>;
 }
 
 function hostLabel(value: string) {
@@ -65,25 +53,25 @@ function hostLabel(value: string) {
   catch { return value; }
 }
 
-function ProgressRail({ status }: { status: RepairView["repair"]["status"] }) {
-  const stages = [
-    ["reported", "Reported"],
-    ["looking", "Found"],
-    ["waiting", "Asked"],
-    ["options_ready", "Reply"],
-    ["chosen", "Chosen"],
-  ] as const;
-  const order = ["reported", "looking", "waiting", "options_ready", "chosen"];
-  const current = order.indexOf(status);
+function Mark() {
+  return <span className="mark" aria-label="Patch">Patch<span>.</span></span>;
+}
+
+function Arrow() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M14 6l6 6-6 6" /></svg>;
+}
+
+function Tick() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>;
+}
+
+function FrameHeader({ onNew, dark = false }: { onNew?: () => void; dark?: boolean }) {
   return (
-    <nav className="progress-rail" aria-label="Repair progress">
-      {stages.map(([key, label], index) => (
-        <div key={key} className={index <= current ? "progress-step active" : "progress-step"}>
-          <span>{index < current ? <CheckIcon /> : index + 1}</span>
-          <strong>{label}</strong>
-        </div>
-      ))}
-    </nav>
+    <header className={`masthead ${dark ? "masthead-dark" : ""}`}>
+      <Mark />
+      <div className="masthead-rule" />
+      {onNew ? <button className="quiet-action" onClick={onNew}>New repair</button> : <span className="masthead-note">Repair concierge</span>}
+    </header>
   );
 }
 
@@ -113,46 +101,49 @@ function App() {
           setReporting(false);
         }}
       />
-    ) : (
-      <HomeScreen onStart={() => setReporting(true)} />
-    );
+    ) : <HomeScreen onStart={() => setReporting(true)} />;
   }
 
-  if (repairView === undefined) return <LoadingShell label="Opening your repair" />;
+  if (repairView === undefined) return <LoadingShell />;
   if (!repairView) return <HomeScreen onStart={() => setReporting(true)} />;
-
   return <RepairScreen view={repairView} onNew={() => setActiveRepairId(null)} />;
 }
 
 function HomeScreen({ onStart }: { onStart: () => void }) {
   return (
-    <main className="page home-page home-v2">
-      <header className="topbar"><Logo /><span className="top-note">Real repair people. Real replies.</span></header>
-      <section className="hero hero-v2">
-        <div className="hero-copy">
-          <p className="eyebrow">Something broke at home?</p>
-          <h1>Don’t call<br /><em>around.</em></h1>
-          <p className="lede">Tell Patch once. We find people who handle it, ask what they charge and when they can come, then bring the real replies back here.</p>
-          <button className="primary big" onClick={onStart}>Tell Patch what broke <ArrowIcon /></button>
-          <div className="hero-proof">
-            <span><b>01</b> Find direct providers</span>
-            <span><b>02</b> Ask them by email</span>
-            <span><b>03</b> Compare what they actually said</span>
+    <main className="screen home-page">
+      <div className="frame home-frame">
+        <FrameHeader dark />
+        <section className="home-stage">
+          <div className="hero-copy">
+            <h1>Something broke.<br /><em>We’ll make the calls.</em></h1>
+            <p>Tell Patch once. We find people who actually handle it, ask for price and timing, and bring their replies back to you.</p>
+            <button className="hero-action" onClick={onStart}>Start a repair <Arrow /></button>
           </div>
-        </div>
 
-        <aside className="hero-demo" aria-label="Example Patch flow">
-          <div className="demo-top"><span>PATCH / LIVE DESK</span><small>Broken doorknob · Abuja</small></div>
-          <div className="demo-step"><span className="demo-icon">01</span><div><strong>Found people who repair doors</strong><small>Service pages checked</small></div></div>
-          <div className="demo-step"><span className="demo-icon">02</span><div><strong>Asked for price + time</strong><small>Ordinary email. No Patch account.</small></div></div>
-          <div className="demo-reply">
-            <div className="demo-reply-head"><span>REAL REPLY</span><small>Tunde Repairs</small></div>
-            <strong>“Yes, I can come around 2. Callout is ₦12,000.”</strong>
+          <div className="story" aria-label="Example Patch conversation">
+            <div className="story-entry story-you">
+              <span>You</span>
+              <p>Bedroom doorknob turns, but the door won’t open.</p>
+            </div>
+            <div className="story-entry">
+              <span>Patch</span>
+              <p>Found people who repair door hardware. Asking now.</p>
+            </div>
+            <div className="story-entry story-reply">
+              <span>Reply</span>
+              <blockquote>“Tomorrow afternoon. Callout is ₦12,000.”</blockquote>
+            </div>
+            <p className="story-foot">Real people. Real replies. Nothing filled in by Patch.</p>
           </div>
-          <div className="demo-truth"><b>Patch rule:</b> the web can prove service fit. Only the person can prove price or timing.</div>
-        </aside>
-      </section>
-      <footer className="home-footer"><span>No directory browsing.</span><span>No invented estimates.</span><span>You choose.</span></footer>
+        </section>
+
+        <footer className="home-signature">
+          <span>Search less.</span>
+          <span>Call nobody.</span>
+          <span>Choose from what people actually said.</span>
+        </footer>
+      </div>
     </main>
   );
 }
@@ -175,13 +166,16 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
     try {
       let photoStorageId: string | undefined;
       if (photo) {
-        if (!photo.type.startsWith("image/")) throw new Error("Choose an image file for the repair photo.");
-        if (photo.size > 5 * 1024 * 1024) throw new Error("Keep the repair photo under 5 MB.");
+        if (!photo.type.startsWith("image/")) throw new Error("Choose an image file.");
+        if (photo.size > 5 * 1024 * 1024) throw new Error("Keep the photo under 5 MB.");
         const uploadUrl = await generateUploadUrl({});
-        const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": photo.type }, body: photo });
-        if (!response.ok) throw new Error("The photo couldn't be uploaded. Try again without it.");
-        const result = await response.json();
-        photoStorageId = result.storageId;
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": photo.type },
+          body: photo,
+        });
+        if (!response.ok) throw new Error("Photo upload failed. Try again without it.");
+        photoStorageId = (await response.json()).storageId;
       }
 
       const repairId = await createRepair({ description, area, photoStorageId });
@@ -194,34 +188,61 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
   }
 
   return (
-    <main className="page report-page">
-      <header className="topbar"><button className="text-button" onClick={onCancel}>Back</button><Logo /><span /></header>
-      <section className="report-shell">
-        <aside className="report-intro">
-          <p className="eyebrow">Start a repair</p>
-          <h1>One problem.<br />Two details.</h1>
-          <p>Tell Patch what happened and where you are. That is enough to start finding people who actually handle it.</p>
-          <div className="report-promises">
-            <span><b>01</b> No diagnosis needed</span>
-            <span><b>02</b> No price guessed from the web</span>
-            <span><b>03</b> Real replies stay attached to the repair</span>
-          </div>
-        </aside>
+    <main className="screen paper-screen report-page">
+      <div className="frame">
+        <header className="masthead">
+          <button className="quiet-action" onClick={onCancel}>Back</button>
+          <div className="masthead-rule" />
+          <Mark />
+        </header>
 
-        <form className="report-form report-card" onSubmit={submit}>
-          <label className="field"><span>What happened</span><textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="My bedroom doorknob is broken. The handle turns but the door won’t open properly." maxLength={1200} required /></label>
-          <label className="field"><span>Your area</span><input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Wuse 2, Abuja" maxLength={120} required /></label>
-          <div className="photo-row">
-            <div><strong>Add a photo</strong><span>Optional · up to 5 MB</span></div>
-            <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
-            <button type="button" className="secondary" onClick={() => photoInput.current?.click()}>{photo ? "Change" : "Add photo"}</button>
+        <section className="report-layout">
+          <div className="report-prompt">
+            <h1>Say it like you’d text a friend.</h1>
+            <p>No categories. No diagnosis. Just what happened and where you are.</p>
           </div>
-          {photo && <div className="selected-file"><span>{photo.name}</span><button type="button" onClick={() => setPhoto(null)}>Remove</button></div>}
-          {error && <p className="error-callout">{error}</p>}
-          <button className="primary big full" disabled={busy}>{busy ? "Starting…" : <>Find people who can fix it <ArrowIcon /></>}</button>
-          <p className="truth-note">Price and timing stay blank until a person actually replies.</p>
-        </form>
-      </section>
+
+          <form className="report-card" onSubmit={submit}>
+            <label className="editorial-field">
+              <span>What happened?</span>
+              <textarea
+                rows={5}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="My bedroom doorknob is broken. The handle turns but the door won’t open properly."
+                maxLength={1200}
+                required
+              />
+            </label>
+
+            <label className="editorial-field">
+              <span>Where?</span>
+              <input
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                placeholder="Wuse 2, Abuja"
+                maxLength={120}
+                required
+              />
+            </label>
+
+            <div className="photo-line">
+              <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+              <button type="button" onClick={() => photoInput.current?.click()}>{photo ? "Change photo" : "Add a photo"}</button>
+              <span>{photo ? photo.name : "Optional"}</span>
+            </div>
+
+            {photo && <button type="button" className="remove-photo" onClick={() => setPhoto(null)}>Remove photo</button>}
+            {error && <p className="inline-error">{error}</p>}
+
+            <button className="submit-repair" disabled={busy}>
+              {busy ? "Starting…" : <>Find someone <Arrow /></>}
+            </button>
+
+            <p className="truth-line">Patch leaves price, time and availability blank until a person says them.</p>
+          </form>
+        </section>
+      </div>
     </main>
   );
 }
@@ -236,40 +257,49 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
   const [localError, setLocalError] = useState<string | null>(null);
 
   const selectableIds = useMemo(
-    () => candidates.filter((c) => c.email && (!c.outreach || (c.outreach.status === "failed" && /not configured in Convex/.test(c.outreach.error || "")))).map((c) => c._id),
+    () => candidates
+      .filter((c) => c.email && (!c.outreach || (c.outreach.status === "failed" && /not configured in Convex/.test(c.outreach.error || ""))))
+      .map((c) => c._id),
     [candidates],
   );
+
   useEffect(() => {
     setSelected((current) => current.length ? current.filter((id) => selectableIds.includes(id)) : selectableIds);
   }, [selectableIds.join("|")]);
 
   const replies = candidates.filter((candidate) => candidate.reply);
   const chosen = candidates.find((candidate) => candidate.chosen);
-  const contactableCandidates = candidates.filter((candidate) => candidate.email);
-  const shownCandidates = contactableCandidates.length > 0 ? contactableCandidates : candidates;
+  const contactable = candidates.filter((candidate) => candidate.email);
+  const shownCandidates = contactable.length ? contactable : candidates;
 
   async function retryDiscovery() {
-    setBusy(true); setLocalError(null);
-    try { await discover({ repairId: repair._id }); } catch (e) { setLocalError(e instanceof Error ? e.message : "Search failed."); }
+    setBusy(true);
+    setLocalError(null);
+    try { await discover({ repairId: repair._id }); }
+    catch (e) { setLocalError(e instanceof Error ? e.message : "Search failed."); }
     finally { setBusy(false); }
   }
 
   async function sendRequests() {
     if (!selected.length) return;
-    setBusy(true); setLocalError(null);
+    setBusy(true);
+    setLocalError(null);
     try { await askPeople({ candidateIds: selected }); }
     catch (e) { setLocalError(e instanceof Error ? e.message : "Messages couldn't be sent."); }
     finally { setBusy(false); }
   }
 
   async function chooseCandidate(candidateId: string) {
-    setBusy(true); setLocalError(null);
+    setBusy(true);
+    setLocalError(null);
     try { await choose({ repairId: repair._id, candidateId }); }
     catch (e) { setLocalError(e instanceof Error ? e.message : "That choice couldn't be saved."); }
     finally { setBusy(false); }
   }
 
-  if (repair.status === "chosen" && chosen) return <DoneScreen repair={repair} candidate={chosen} onNew={onNew} />;
+  if (repair.status === "chosen" && chosen) {
+    return <DoneScreen repair={repair} candidate={chosen} onNew={onNew} />;
+  }
 
   const finding = (repair.status === "reported" || repair.status === "looking") && candidates.length === 0 && !repair.lastError;
   const peopleFound = candidates.length > 0 && candidates.every((candidate) => !candidate.outreach) && replies.length === 0;
@@ -277,98 +307,140 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
   const outreachFailed = replies.length === 0 && !waiting && candidates.some((candidate) => candidate.outreach?.status === "failed");
 
   return (
-    <main className="page repair-page">
-      <header className="topbar"><Logo /><button className="text-button" onClick={onNew}>New repair</button></header>
-      <section className="repair-head">
-        <div><p className="eyebrow">Your repair</p><h1>{repair.description}</h1><p className="repair-area">{repair.area}</p></div>
-        {repair.photoUrl && <img className="repair-photo" src={repair.photoUrl} alt="Repair" />}
-      </section>
-      <ProgressRail status={repair.status} />
+    <main className="screen paper-screen repair-page">
+      <div className="frame">
+        <FrameHeader onNew={onNew} />
 
-      {finding && <LookingState />}
-
-      {repair.lastError && candidates.length === 0 && (
-        <section className="state-panel">
-          <p className="eyebrow">Search paused</p>
-          <h2>We didn’t get a clean match.</h2>
-          <p>{repair.lastError}</p>
-          <button className="primary" onClick={retryDiscovery} disabled={busy}>{busy ? "Trying again…" : "Try the search again"}</button>
+        <section className="repair-intro">
+          <span>{repair.area}</span>
+          <h1>{repair.description}</h1>
+          {repair.photoUrl && <img src={repair.photoUrl} alt="Repair" />}
         </section>
-      )}
 
-      {peopleFound && (
-        <section className="results-section results-v2">
-          <div className="section-heading">
-            <div><p className="eyebrow">Direct matches</p><h2>{shownCandidates.length} {shownCandidates.length === 1 ? "provider" : "providers"} we can reach.</h2></div>
-            <p>Each one has public evidence for this kind of work. None is treated as available until they reply.</p>
-          </div>
-          <div className="people-list">
-            {shownCandidates.map((candidate) => (
-              <CandidateRow key={candidate._id} candidate={candidate} selected={selected.includes(candidate._id)} onToggle={() => setSelected((current) => current.includes(candidate._id) ? current.filter((id) => id !== candidate._id) : [...current, candidate._id])} />
-            ))}
-          </div>
-          {candidates.length > shownCandidates.length && <p className="secondary-results">{candidates.length - shownCandidates.length} other source match{candidates.length - shownCandidates.length === 1 ? "" : "es"} hidden because Patch could not find a public email.</p>}
-          {(localError || candidates.some((c) => c.outreach?.error)) && <p className="error-callout">{localError || "One of the messages couldn't be sent."}</p>}
-          <button className="primary big results-cta" disabled={!selected.length || busy} onClick={sendRequests}>{busy ? "Sending…" : <>Ask {selected.length || "them"} for price and time <ArrowIcon /></>}</button>
-        </section>
-      )}
+        {finding && <LookingState />}
 
-      {waiting && <WaitingState candidates={candidates} />}
+        {repair.lastError && candidates.length === 0 && (
+          <section className="quiet-state">
+            <h2>Search stalled.</h2>
+            <p>{repair.lastError}</p>
+            <button onClick={retryDiscovery} disabled={busy}>{busy ? "Trying again…" : "Try again"}</button>
+          </section>
+        )}
 
-      {outreachFailed && (
-        <section className="state-panel">
-          <p className="eyebrow">Message not sent</p>
-          <h2>We couldn’t send that request.</h2>
-          <p>{candidates.find((candidate) => candidate.outreach?.status === "failed")?.outreach?.error || "Check the mail setup and try again."}</p>
-          {selectableIds.length > 0 && <button className="primary" onClick={sendRequests} disabled={busy}>{busy ? "Trying again…" : "Try again"}</button>}
-        </section>
-      )}
+        {peopleFound && (
+          <section className="results-v2 provider-section">
+            <div className="section-open">
+              <h2>{shownCandidates.length === 1 ? "One person worth asking." : `${shownCandidates.length} people worth asking.`}</h2>
+              <p>These are direct matches we can reach. No one is marked available until they reply.</p>
+            </div>
 
-      {replies.length > 0 && (
-        <section className="results-section replies-section">
-          <div className="section-heading"><div><p className="eyebrow">Replies are in</p><h2>Who should take the job?</h2></div><p>Everything below came from their actual replies. If they didn’t state something, Patch leaves it blank.</p></div>
-          <div className="reply-list">
-            {candidates.map((candidate) => candidate.reply ? <ReplyCard key={candidate._id} candidate={candidate} onChoose={() => chooseCandidate(candidate._id)} busy={busy} /> : <PendingRow key={candidate._id} candidate={candidate} />)}
-          </div>
-          {localError && <p className="error-callout">{localError}</p>}
-        </section>
-      )}
+            <div className="provider-list">
+              {shownCandidates.map((candidate, index) => (
+                <ProviderRow
+                  key={candidate._id}
+                  candidate={candidate}
+                  index={index}
+                  selected={selected.includes(candidate._id)}
+                  onToggle={() => setSelected((current) =>
+                    current.includes(candidate._id)
+                      ? current.filter((id) => id !== candidate._id)
+                      : [...current, candidate._id],
+                  )}
+                />
+              ))}
+            </div>
 
-      <footer className="repair-footer"><span>Patch only trusts a website for service fit.</span><span>Price and timing come from the person’s reply.</span></footer>
+            {candidates.length > shownCandidates.length && (
+              <p className="muted-note">{candidates.length - shownCandidates.length} source match{candidates.length - shownCandidates.length === 1 ? "" : "es"} omitted because Patch could not find a public way to reach them.</p>
+            )}
+
+            {(localError || candidates.some((c) => c.outreach?.error)) && (
+              <p className="inline-error">{localError || "One of the messages couldn't be sent."}</p>
+            )}
+
+            <button className="bottom-action" disabled={!selected.length || busy} onClick={sendRequests}>
+              {busy ? "Sending…" : <>Ask {selected.length || "them"} for price + time <Arrow /></>}
+            </button>
+          </section>
+        )}
+
+        {waiting && <WaitingState candidates={candidates} />}
+
+        {outreachFailed && (
+          <section className="quiet-state">
+            <h2>Message didn’t go out.</h2>
+            <p>{candidates.find((candidate) => candidate.outreach?.status === "failed")?.outreach?.error || "Try again."}</p>
+            {selectableIds.length > 0 && <button onClick={sendRequests} disabled={busy}>{busy ? "Trying again…" : "Try again"}</button>}
+          </section>
+        )}
+
+        {replies.length > 0 && (
+          <section className="reply-section">
+            <div className="section-open">
+              <h2>Replies are in.</h2>
+              <p>Patch only pulls out what was actually stated. Missing details stay missing.</p>
+            </div>
+
+            <div className="reply-list">
+              {candidates.map((candidate) =>
+                candidate.reply
+                  ? <ReplyBlock key={candidate._id} candidate={candidate} onChoose={() => chooseCandidate(candidate._id)} busy={busy} />
+                  : <PendingLine key={candidate._id} candidate={candidate} />
+              )}
+            </div>
+            {localError && <p className="inline-error">{localError}</p>}
+          </section>
+        )}
+
+        <details className="system-proof">
+          <summary>How Patch got here</summary>
+          <p>Search evidence comes from public pages. Outreach runs through AgentMail. Replies land in Convex and are conservatively extracted by OpenAI GPT-OSS served through Groq.</p>
+        </details>
+      </div>
     </main>
   );
 }
 
-function CandidateRow({ candidate, selected, onToggle }: { candidate: ViewCandidate; selected: boolean; onToggle: () => void }) {
+function ProviderRow({
+  candidate,
+  index,
+  selected,
+  onToggle,
+}: {
+  candidate: ViewCandidate;
+  index: number;
+  selected: boolean;
+  onToggle: () => void;
+}) {
   const canContact = Boolean(candidate.email);
   return (
-    <div className={`candidate-row ${selected ? "selected" : ""}`}>
-      <button className="candidate-select" onClick={onToggle} disabled={!canContact} aria-pressed={selected}>
-        <span className="check-box">{selected && <CheckIcon />}</span>
-        <span className="candidate-main">
-          <span className="candidate-title-line"><strong>{candidate.name}</strong><small>{hostLabel(candidate.website)}</small></span>
-          <span className="evidence-quote">“{candidate.serviceEvidence}”</span>
-        </span>
-      </button>
-      <div className="candidate-meta">
-        <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">Open evidence ↗</a>
-        <span className={canContact ? "contact-proof" : ""}>{canContact ? "Public email found" : "No public email found"}</span>
+    <article className={`provider-row ${selected ? "is-selected" : ""}`}>
+      <span className="provider-index">{String(index + 1).padStart(2, "0")}</span>
+      <div className="provider-body">
+        <a className="provider-name" href={candidate.sourceUrl} target="_blank" rel="noreferrer">{candidate.name}</a>
+        <p className="provider-evidence">“{candidate.serviceEvidence}”</p>
+        <div className="provider-meta">
+          <span>{hostLabel(candidate.website)}</span>
+          <span>{canContact ? "Reachable by email" : "No public email"}</span>
+        </div>
       </div>
-    </div>
+      <button className="provider-toggle" onClick={onToggle} disabled={!canContact} aria-pressed={selected} aria-label={selected ? `Remove ${candidate.name}` : `Ask ${candidate.name}`}>
+        {selected ? <Tick /> : <span>+</span>}
+      </button>
+    </article>
   );
 }
 
 function LookingState() {
   return (
     <section className="looking-state">
-      <div className="looking-copy">
-        <div className="pulse-ring"><span /></div>
-        <div><p className="eyebrow">Patch is working</p><h2>From one sentence to real people.</h2><p>We’re turning the repair into search context, checking public service pages, and keeping only evidence-backed matches.</p></div>
+      <div className="looking-title">
+        <h2>Looking for the right person.<br /><em>Not the longest list.</em></h2>
       </div>
-      <div className="operation-feed" aria-label="Live repair search">
-        <div className="operation-row done"><span><CheckIcon /></span><div><strong>Understand the repair</strong><small>OpenAI GPT-OSS · structured context</small></div></div>
-        <div className="operation-row live"><span className="mini-pulse" /><div><strong>Search public service pages</strong><small>Firecrawl · service evidence + contact</small></div></div>
-        <div className="operation-row"><span>03</span><div><strong>Prepare outreach</strong><small>Only after a public match is found</small></div></div>
+      <div className="search-sequence">
+        <div><span>1</span><p>Understand what kind of repair this actually is.</p></div>
+        <div className="is-live"><span>2</span><p>Check direct service pages and public contact details.</p></div>
+        <div><span>3</span><p>Keep only people we can justify asking.</p></div>
       </div>
     </section>
   );
@@ -379,78 +451,108 @@ function WaitingState({ candidates }: { candidates: ViewCandidate[] }) {
   const failed = candidates.filter((c) => c.outreach?.status === "failed");
   return (
     <section className="waiting-state">
-      <div className="waiting-copy"><p className="eyebrow">Messages sent</p><h2>Patch is doing the calling around.</h2><p>{sent.length} {sent.length === 1 ? "request is" : "requests are"} out through AgentMail. Nothing shown as price or timing until a person actually replies.</p></div>
-      <div className="outbound-stack">
-        {sent.map((candidate, index) => (
-          <article className="mail-card outbound" key={candidate._id} style={{ ["--stack" as string]: index }}>
-            <div className="mail-kicker"><span>OUT</span><small>AgentMail · sent</small></div>
-            <strong>{candidate.name}</strong>
-            <p>Can you take this repair? When could you come, and roughly what would you charge?</p>
-            <div className="mail-foot"><span>{hostLabel(candidate.website)}</span><span>Waiting for reply</span></div>
-          </article>
-        ))}
-        {failed.map((candidate) => <div className="mail-card failed-mail" key={candidate._id}><strong>{candidate.name}</strong><span>Message didn’t send</span></div>)}
+      <div className="section-open waiting-open">
+        <span className="qa-label">Messages sent</span>
+        <h2>Now we wait for humans.</h2>
+        <p>{sent.length} {sent.length === 1 ? "request is" : "requests are"} out. Patch won’t manufacture a quote while we wait.</p>
       </div>
-      <div className="waiting-foot"><span className="live-dot" /> Live via Convex — replies appear here without refresh or copy/paste.</div>
+
+      <div className="sent-list">
+        {sent.map((candidate, index) => (
+          <div className="sent-line" key={candidate._id}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{candidate.name}</strong>
+            <em>Request delivered</em>
+          </div>
+        ))}
+        {failed.map((candidate) => (
+          <div className="sent-line is-failed" key={candidate._id}>
+            <span>—</span><strong>{candidate.name}</strong><em>Send failed</em>
+          </div>
+        ))}
+      </div>
+
+      <p className="live-note"><i /> Leave this open. A reply appears here live.</p>
     </section>
   );
 }
 
-function ReplyCard({ candidate, onChoose, busy }: { candidate: ViewCandidate; onChoose: () => void; busy: boolean }) {
+function ReplyBlock({ candidate, onChoose, busy }: { candidate: ViewCandidate; onChoose: () => void; busy: boolean }) {
   const reply = candidate.reply!;
   const unavailable = reply.canTakeJob === false;
   return (
-    <article className={`reply-card ${unavailable ? "unavailable" : ""}`}>
-      <div className="incoming-mail">
-        <div className="mail-kicker"><span>IN</span><small>Real email reply</small></div>
-        <div className="incoming-head"><strong>{candidate.name}</strong><span>{hostLabel(candidate.website)}</span></div>
-        <p>{reply.rawText}</p>
+    <article className={`reply-block ${unavailable ? "is-unavailable" : ""}`}>
+      <div className="reply-provider">
+        <span>{hostLabel(candidate.website)}</span>
+        <h3>{candidate.name}</h3>
       </div>
-      <div className="extraction-line"><span>OpenAI GPT-OSS extracted only stated facts</span><i /></div>
-      <div className="reply-top"><div><p className="reply-name">{candidate.name}</p><span>{reply.canTakeJob === true ? "Can take the job" : reply.canTakeJob === false ? "Can’t take this one" : "Willingness not stated"}</span></div><span className="human-badge">From their reply</span></div>
+
+      <blockquote className="reply-quote">“{reply.rawText}”</blockquote>
+
       <div className="reply-facts">
-        <div><span>Willingness</span><strong>{reply.canTakeJob === true ? "Yes" : reply.canTakeJob === false ? "No" : "Not stated"}</strong></div>
+        <div><span>Can take it?</span><strong>{reply.canTakeJob === true ? "Yes" : reply.canTakeJob === false ? "No" : "Not stated"}</strong></div>
         <div><span>When</span><strong>{reply.arrivalText || "Not stated"}</strong></div>
         <div><span>Price</span><strong>{money(reply.priceAmount, reply.currency)}</strong></div>
       </div>
+
       {reply.note && <p className="reply-note">{reply.note}</p>}
-      {reply.extractionStatus === "failed" && <p className="extraction-warning">Patch couldn’t safely pull out the details, so use the original reply above.</p>}
-      <details><summary>Read original reply</summary><blockquote>{reply.rawText}</blockquote></details>
-      {!unavailable && <button className="primary" onClick={onChoose} disabled={busy}>{busy ? "Saving…" : `Choose ${candidate.name.split(" ")[0]}`}</button>}
+      {reply.extractionStatus === "failed" && <p className="inline-error">Patch could not safely extract every detail. Use the original reply.</p>}
+
+      <details className="raw-reply">
+        <summary>Read original reply</summary>
+        <p>{reply.rawText}</p>
+      </details>
+
+      {!unavailable && (
+        <button className="choose-action" onClick={onChoose} disabled={busy}>
+          {busy ? "Saving…" : <>Choose {candidate.name.split(" ")[0]} <Arrow /></>}
+        </button>
+      )}
     </article>
   );
 }
 
-function PendingRow({ candidate }: { candidate: ViewCandidate }) {
+function PendingLine({ candidate }: { candidate: ViewCandidate }) {
   if (!candidate.outreach || candidate.outreach.status !== "sent") return null;
-  return <div className="pending-row"><span className="status-dot" /><strong>{candidate.name}</strong><span>Still waiting</span></div>;
+  return <div className="pending-line"><span>{candidate.name}</span><em>Still waiting</em></div>;
 }
 
 function DoneScreen({ repair, candidate, onNew }: { repair: RepairView["repair"]; candidate: ViewCandidate; onNew: () => void }) {
   const reply = candidate.reply!;
   return (
-    <main className="done-page">
-      <header className="topbar"><Logo /><button className="text-button" onClick={onNew}>New repair</button></header>
-      <ProgressRail status="chosen" />
-      <section className="done-card">
-        <div className="done-mark"><CheckIcon /></div>
-        <p className="eyebrow">Sorted</p>
-        <h1>{candidate.name}{reply?.arrivalText ? <> can come <em>{reply.arrivalText}</em>.</> : <> is your choice.</>}</h1>
-        <div className="decision-receipt">
-          <div><span>Problem</span><strong>{repair.description}</strong></div>
-          <div><span>Provider</span><strong>{candidate.name}</strong></div>
-          <div><span>When they said</span><strong>{reply?.arrivalText || "Not stated"}</strong></div>
-          <div><span>What they quoted</span><strong>{money(reply?.priceAmount ?? null, reply?.currency ?? null)}</strong></div>
-        </div>
-        <p className="receipt-truth">Price and timing came from the person’s reply — Patch did not estimate them.</p>
-      </section>
-      <p className="done-foot">Patch didn’t book or pay anyone. You made the choice.</p>
+    <main className="screen done-page">
+      <div className="frame done-frame">
+        <FrameHeader onNew={onNew} dark />
+
+        <section className="done-stage">
+          <span className="qa-label">Sorted</span>
+          <h1>{candidate.name}</h1>
+          <p className="done-line">
+            {reply?.arrivalText ? <>said <em>{reply.arrivalText}</em></> : <>is your choice</>}
+            {reply?.priceAmount != null ? <> · <strong>{money(reply.priceAmount, reply.currency)}</strong></> : null}
+          </p>
+
+          <div className="done-receipt">
+            <div><span>You said</span><p>{repair.description}</p></div>
+            <div><span>They said</span><p>{reply.rawText}</p></div>
+          </div>
+
+          <p className="done-truth">Patch didn’t estimate the price, invent the timing, book anyone or take payment. You chose from the reply.</p>
+        </section>
+      </div>
     </main>
   );
 }
 
-function LoadingShell({ label }: { label: string }) {
-  return <main className="page loading-page"><header className="topbar"><Logo /><span /></header><div className="loading-center"><div className="pulse-ring"><span /></div><p>{label}</p></div></main>;
+function LoadingShell() {
+  return (
+    <main className="screen home-page loading-page">
+      <div className="frame">
+        <FrameHeader dark />
+        <div className="loading-word">Patch<span>.</span></div>
+      </div>
+    </main>
+  );
 }
 
 export default App;
