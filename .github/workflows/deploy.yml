@@ -31,14 +31,19 @@ jobs:
         run: npx convex deploy
       - name: Upload hosted frontend
         run: npx @convex-dev/static-hosting upload --build --component staticHosting
-      - name: Smoke hosted app
+      - name: Smoke hosted app and webhook route
         shell: bash
         run: |
           curl --fail --retry 8 --retry-all-errors --retry-delay 2 --silent --show-error \
             https://aware-porpoise-430.convex.site/ -o /tmp/patch.html
           grep -q '<div id="root"></div>' /tmp/patch.html
           grep -q 'assets/' /tmp/patch.html
-      - name: Smoke OpenAI and Firecrawl discovery
+          webhook_status="$(curl --silent --show-error -o /tmp/webhook.txt -w '%{http_code}' \
+            -X POST -H 'content-type: application/json' --data '{}' \
+            https://aware-porpoise-430.convex.site/agentmail/webhook)"
+          test "$webhook_status" = "401"
+          grep -q 'Invalid webhook signature' /tmp/webhook.txt
+      - name: Smoke GPT-OSS and Firecrawl discovery
         shell: bash
         run: |
           repair_id="$(npx convex run repairs:createRepair '{"description":"My bedroom doorknob is broken. The handle turns but the door won’t open properly.","area":"Abuja"}' | tr -d '"\r\n')"

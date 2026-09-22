@@ -5,10 +5,10 @@ Target: 80–100 seconds. Show the product, not the architecture.
 ## Before recording
 
 1. Confirm the production `*.convex.site` app loads in a private browser window.
-2. Confirm `OPENAI_API_KEY`, `FIRECRAWL_API_KEY`, `AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `AGENTMAIL_WEBHOOK_SECRET`, and `DEMO_RESET_TOKEN` are set on the production Convex deployment.
+2. Confirm `GROQ_API_KEY`, `FIRECRAWL_API_KEY`, `AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `AGENTMAIL_WEBHOOK_SECRET`, and `DEMO_RESET_TOKEN` are set on the production Convex deployment.
 3. In AgentMail, subscribe a webhook to `message.received` at:
 
-   `https://<deployment>.convex.site/api/agentmail/webhook`
+   `https://<deployment>.convex.site/agentmail/webhook`
 
 4. Reset old demo data:
 
@@ -75,8 +75,8 @@ End on the confirmation screen.
 
 - Firecrawl: use **Try the search again**. Do not pretend seeded candidates are live results.
 - AgentMail outbound: inspect the candidate’s public email and Convex logs; Patch prevents a second send after an outreach record exists.
-- AgentMail inbound: confirm the webhook URL is `/api/agentmail/webhook`, the event subscription is `message.received`, and the production webhook secret matches Convex.
-- OpenAI extraction: the original reply is still stored and visible even when extraction fails. That is the safe failure mode.
+- AgentMail inbound: confirm the webhook URL is `/agentmail/webhook`, the event subscription is `message.received`, and the production webhook secret matches Convex.
+- GPT-OSS extraction through Groq: the original reply is still stored and visible even when extraction fails. That is the safe failure mode.
 
 ## Truth line for the demo
 

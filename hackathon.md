@@ -42,7 +42,7 @@ Patch has a real AgentMail inbox. For selected candidates it sends a plain email
 
 AgentMail sends `message.received` webhooks to:
 
-`https://<deployment>.convex.site/api/agentmail/webhook`
+`https://<deployment>.convex.site/agentmail/webhook`
 
 The webhook is verified with its Svix signature before the message is processed. Patch correlates the inbound thread to the original outreach and records it once.
 
@@ -97,7 +97,7 @@ DEMO_RESET_TOKEN
 
 For local Vite development, Convex writes `VITE_CONVEX_URL` to `.env.local`.
 
-Create an AgentMail webhook for `message.received` pointing at the deployment’s `/api/agentmail/webhook` route.
+Create an AgentMail webhook for `message.received` pointing at the deployment’s `/agentmail/webhook` route.
 
 ## Deploy
 

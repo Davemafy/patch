@@ -73,7 +73,7 @@ Create or choose an AgentMail inbox and put its id in `AGENTMAIL_INBOX_ID`.
 After the Convex deployment exists, create a webhook subscribed to `message.received` at:
 
 ```text
-https://<deployment>.convex.site/api/agentmail/webhook
+https://<deployment>.convex.site/agentmail/webhook
 ```
 
 Store the webhook signing secret in `AGENTMAIL_WEBHOOK_SECRET`. Incoming webhooks are Svix-signature verified before Patch accepts them.
@@ -98,7 +98,7 @@ Thin service-specific helpers. Sponsor credentials never enter the browser bundl
 
 ### `convex/http.ts`
 
-Receives the AgentMail `message.received` webhook at `/api/agentmail/webhook` and verifies the Svix signature.
+Receives the AgentMail `message.received` webhook at `/agentmail/webhook` and verifies the Svix signature.
 
 ### React frontend
 
