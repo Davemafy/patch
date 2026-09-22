@@ -42,18 +42,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .mark {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   letter-spacing: -.045em;
-}
-.mark i {
-  width: 12px;
-  height: 12px;
-  display: inline-block;
-  border-radius: 4px 4px 4px 1px;
-  background: var(--brand);
-  transform: rotate(-8deg);
 }
 .masthead-spacer { flex: 1; }
 .masthead-note, .quiet-action { color: var(--muted); font-size: 11px; }
@@ -67,114 +58,125 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* New repair */
 .new-repair-shell {
-  width: min(100%, 760px);
+  width: min(100%, 680px);
   margin: auto;
-  padding: 54px 0 104px;
+  padding: 44px 0 92px;
 }
-.new-repair-heading { margin: 0 0 28px; }
+.new-repair-heading {
+  margin: 0 0 26px;
+}
 .new-repair-heading h1 {
   margin: 0;
-  font-size: clamp(42px, 5vw, 58px);
-  line-height: 1;
-  letter-spacing: -.052em;
-  font-weight: 750;
+  font-size: clamp(34px, 4vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+  font-weight: 720;
 }
 .new-repair-heading p {
-  max-width: 610px;
-  margin: 15px 0 0;
+  max-width: 560px;
+  margin: 10px 0 0;
   color: var(--muted);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .new-repair-form {
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
+  width: 100%;
 }
-.product-field { display: grid; gap: 8px; }
-.product-field > span {
+.repair-composer {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.repair-composer > span,
+.utility-field > span {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 650;
 }
-.problem-field { padding: 22px 22px 18px; }
-.product-field textarea,
-.product-field input {
+.repair-composer textarea,
+.utility-field input {
   width: 100%;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--text);
 }
-.product-field textarea {
-  min-height: 148px;
+.repair-composer textarea {
+  min-height: 126px;
   resize: vertical;
-  padding: 2px 0;
-  font-size: 24px;
-  line-height: 1.36;
-  letter-spacing: -.027em;
-  font-weight: 560;
+  padding: 0;
+  font-size: 21px;
+  line-height: 1.42;
+  letter-spacing: -.022em;
+  font-weight: 540;
 }
-.product-field input { min-height: 34px; font-size: 16px; }
-.product-field textarea::placeholder,
-.product-field input::placeholder { color: #afaca4; opacity: 1; }
-.new-repair-row {
+.repair-composer textarea::placeholder,
+.utility-field input::placeholder {
+  color: #aaa79f;
+  opacity: 1;
+}
+.repair-utilities {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 22px;
   align-items: center;
-  padding: 17px 22px;
-  border-top: 1px solid var(--line);
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
 }
-.area-field { min-width: 0; }
-.photo-control {
-  min-width: 135px;
+.utility-field {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 56px minmax(0,1fr);
+  gap: 12px;
+  align-items: center;
+}
+.utility-field input {
+  min-height: 34px;
+  font-size: 15px;
+}
+.utility-photo {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
-.photo-control button, .remove-photo {
+.utility-photo button,
+.remove-photo {
   border: 0;
   background: transparent;
   padding: 0;
   cursor: pointer;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
 }
-.photo-control button:hover, .remove-photo:hover { color: var(--text); }
-.photo-control span {
-  max-width: 100px;
+.utility-photo button:hover,
+.remove-photo:hover {
+  color: var(--text);
+}
+.utility-photo span {
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #a19e96;
+  color: #9b9890;
   font-size: 10px;
 }
-.remove-photo { margin: 9px 22px 0; }
-.inline-error { margin: 14px 22px 0; color: var(--danger); font-size: 12px; line-height: 1.5; }
-.new-repair-actions {
-  min-height: 78px;
-  padding: 15px 16px 15px 22px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+.remove-photo {
+  margin-top: 10px;
 }
-.new-repair-actions p {
-  max-width: 380px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 10px;
+.inline-error {
+  margin: 14px 0 0;
+  color: var(--danger);
+  font-size: 12px;
   line-height: 1.5;
 }
-.submit-repair, .bottom-action, .choose-action {
+.submit-repair,
+.bottom-action,
+.choose-action {
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -185,13 +187,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
 }
 .submit-repair {
-  min-height: 48px;
-  padding: 0 17px 0 19px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 22px;
+  padding: 0 16px 0 18px;
   background: var(--text);
   color: #fff;
 }
-.submit-repair:hover:not(:disabled), .bottom-action:hover:not(:disabled), .choose-action:hover:not(:disabled) { transform: translateY(-1px); }
-.submit-repair:disabled, .bottom-action:disabled, .choose-action:disabled { opacity: .45; cursor: default; }
+.submit-repair:hover:not(:disabled),
+.bottom-action:hover:not(:disabled),
+.choose-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.submit-repair:disabled,
+.bottom-action:disabled,
+.choose-action:disabled {
+  opacity: .45;
+  cursor: default;
+}
+.form-footnote {
+  max-width: 520px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
 
 /* Active repair */
 .repair-intro {
@@ -562,20 +582,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .masthead { height: 60px; }
   .masthead-note { display: none; }
 
-  .new-repair-shell { padding: 42px 0 72px; }
-  .new-repair-heading h1 { font-size: 38px; }
+  .new-repair-shell { padding: 34px 0 64px; }
+  .new-repair-heading { margin-bottom: 22px; }
+  .new-repair-heading h1 { font-size: 32px; }
   .new-repair-heading p { font-size: 13px; }
-  .new-repair-form { border-radius: 20px; }
-  .problem-field { padding: 18px 17px 15px; }
-  .product-field textarea { min-height: 128px; font-size: 20px; }
-  .new-repair-row { grid-template-columns: 1fr; gap: 15px; padding: 15px 17px; }
-  .photo-control { justify-content: flex-start; }
-  .new-repair-actions {
-    align-items: stretch;
-    flex-direction: column;
-    padding: 14px 15px 15px 17px;
+  .repair-composer { padding-bottom: 18px; }
+  .repair-composer textarea {
+    min-height: 112px;
+    font-size: 18px;
+    line-height: 1.45;
   }
-  .submit-repair { width: 100%; }
+  .repair-utilities {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 15px 0;
+  }
+  .utility-field {
+    grid-template-columns: 48px minmax(0,1fr);
+  }
+  .utility-photo {
+    justify-content: flex-start;
+  }
+  .submit-repair {
+    min-height: 50px;
+    margin-top: 18px;
+  }
 
   .repair-intro { padding: 21px 0 19px; }
   .repair-intro.has-photo { grid-template-columns: 66px 1fr; gap: 13px; }
