@@ -46,7 +46,7 @@ await homePage.screenshot({ path: "desktop-new-repair.png", fullPage: true });
 await homeContext.close();
 
 // Reuse a persisted real Firecrawl discovery from the live deployment for visual QA.
-let discoveryRepairId = "jh74dydh1r74kmpz75epmxk69h8ewkqe";
+let discoveryRepairId = "jh70bz7f75f69vbq2vwe8whts58exnn1";
 let discoveryView = JSON.parse(runConvex("repairs:getRepair", { repairId: discoveryRepairId }));
 if (!discoveryView?.candidates?.length) {
   discoveryRepairId = JSON.parse(runConvex("repairs:createRepair", {
