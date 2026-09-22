@@ -26,45 +26,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          agentmail_key="$(npx convex env get AGENTMAIL_API_KEY)"
-          primary_inbox="$(npx convex env get AGENTMAIL_INBOX_ID)"
-          test -n "$agentmail_key"
-          test -n "$primary_inbox"
-
-          secondary_json="$(curl --fail --silent --show-error \
-            -X POST https://api.agentmail.to/v0/inboxes \
-            -H "Authorization: Bearer $agentmail_key" \
-            -H 'Content-Type: application/json' \
-            --data "{\"display_name\":\"Patch Controlled Acceptance\",\"client_id\":\"patch-controlled-${GITHUB_RUN_ID}\"}")"
-          secondary_inbox="$(printf '%s' "$secondary_json" | jq -r '.inbox_id')"
-          secondary_email="$(printf '%s' "$secondary_json" | jq -r '.email')"
-          test -n "$secondary_inbox"
-          test -n "$secondary_email"
-
-          repair_id="$(npx convex run repairs:createRepair '{"description":"Controlled acceptance test: bedroom doorknob handle turns but the door won’t open properly.","area":"Abuja — controlled acceptance test"}' | tr -d '"\r\n')"
-          candidate_json="$(jq -nc --arg repairId "$repair_id" --arg email "$secondary_email" '{repairId:$repairId,category:"Controlled AgentMail acceptance",searchQuery:"controlled acceptance only",candidates:[{name:"Controlled AgentMail Test Inbox",website:"https://docs.agentmail.to",email:$email,serviceEvidence:"Controlled acceptance fixture — not a real repair provider.",sourceUrl:"https://docs.agentmail.to",sourceTitle:"Controlled acceptance fixture"}]}')"
-          npx convex run repairs:saveDiscoveredRepairPeople "$candidate_json"
-          view="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
-          candidate_id="$(printf '%s' "$view" | jq -r '.candidates[0]._id')"
+          setup="$(npx convex run acceptance:setupControlled '{}')"
+          repair_id="$(printf '%s' "$setup" | jq -r '.repairId')"
+          candidate_id="$(printf '%s' "$setup" | jq -r '.candidateId')"
+          secondary_inbox="$(printf '%s' "$setup" | jq -r '.secondaryInboxId')"
+          test -n "$repair_id"
           test -n "$candidate_id"
+          test -n "$secondary_inbox"
+          echo "Controlled repair: $repair_id"
 
-          npx convex run mail:askRepairPeople "$(jq -nc --arg id "$candidate_id" '{candidateIds:[$id]}')"
-
-          received_message_id=""
+          ready=false
           for attempt in $(seq 1 12); do
-            messages="$(curl --fail --silent --show-error -H "Authorization: Bearer $agentmail_key" "https://api.agentmail.to/v0/inboxes/$secondary_inbox/messages?limit=20")"
-            received_message_id="$(printf '%s' "$messages" | jq -r '[.messages[] | select((.labels // []) | index("received"))][0].message_id // empty')"
-            if [ -n "$received_message_id" ]; then break; fi
+            result="$(npx convex run acceptance:replyControlled "$(jq -nc --arg id "$secondary_inbox" '{secondaryInboxId:$id}')")"
+            ready="$(printf '%s' "$result" | jq -r '.ready')"
+            if [ "$ready" = "true" ]; then break; fi
             sleep 5
           done
-          test -n "$received_message_id"
-
-          reply_text="CONTROLLED ACCEPTANCE TEST — not a real contractor quote. Yes, I can take this test job. I can come tomorrow afternoon. Test callout is ₦12,000."
-          curl --fail --silent --show-error \
-            -X POST "https://api.agentmail.to/v0/inboxes/$secondary_inbox/messages/$received_message_id/reply" \
-            -H "Authorization: Bearer $agentmail_key" \
-            -H 'Content-Type: application/json' \
-            --data "$(jq -nc --arg text "$reply_text" '{text:$text}')" >/dev/null
+          test "$ready" = "true"
 
           reply_count=0
           for attempt in $(seq 1 18); do
