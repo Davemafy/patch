@@ -13,7 +13,7 @@ export const findRepairPeople = action({
 
     try {
       const { category, searchQuery } = await understandRepair(view.repair.description, view.repair.area);
-      const candidates = await firecrawlFind(searchQuery, category);
+      const candidates = await firecrawlFind(searchQuery, category, view.repair.area);
       await ctx.runMutation(anyApi.repairs.saveDiscoveredRepairPeople, {
         repairId,
         category,

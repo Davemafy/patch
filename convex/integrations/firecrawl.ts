@@ -22,6 +22,14 @@ const NON_PROVIDER_HOSTS = new Set([
   "youtube.com",
   "tiktok.com",
   "pinterest.com",
+  "daibau.ng",
+  "wesabiwork.ng",
+  "sabiwork.com",
+  "finelib.com",
+  "africabizinfo.com",
+  "cybo.com",
+  "businesslist.com.ng",
+  "play.google.com",
 ]);
 
 function isProviderHost(hostname: string) {
@@ -105,8 +113,12 @@ async function scrape(url: string) {
   }
 }
 
-export async function findRepairPeople(searchQuery: string, category: string): Promise<DiscoveredPerson[]> {
-  const queries = [searchQuery, `${searchQuery} contact email`];
+export async function findRepairPeople(searchQuery: string, category: string, area: string): Promise<DiscoveredPerson[]> {
+  const queries = [
+    searchQuery,
+    `${area} ${category} handyman contact email`,
+    `${area} ${category} company contact`,
+  ];
   const results: FirecrawlResult[] = [];
   for (const query of queries) {
     const data = await firecrawl("/search", { query, limit: 10, sources: ["web"] });
@@ -127,13 +139,22 @@ export async function findRepairPeople(searchQuery: string, category: string): P
     const page = await scrape(resultUrl.toString());
     let markdown = String(page?.markdown || result.markdown || "");
     let email = emailFrom(markdown);
+    const areaTerms = area
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((term) => term.length > 3);
+    const firstPassText = `${markdown}\n${result.description || ""}\n${result.title || ""}`.toLowerCase();
+    let areaMatch = areaTerms.length === 0 || areaTerms.some((term) => firstPassText.includes(term));
 
-    if (!email && resultUrl.pathname !== "/") {
+    if ((!email || !areaMatch) && resultUrl.pathname !== "/") {
       const home = await scrape(resultUrl.origin);
       if (home?.markdown) markdown += `\n${home.markdown}`;
-      email = emailFrom(markdown);
+      email = email || emailFrom(markdown);
+      const homeText = markdown.toLowerCase();
+      areaMatch = areaTerms.length === 0 || areaTerms.some((term) => homeText.includes(term));
     }
 
+    if (!areaMatch) continue;
     const title = String(page?.metadata?.title || result.title || domain).trim();
     const evidence = evidenceFrom(markdown, category, result.description || title);
     if (!evidence) continue;
