@@ -49,11 +49,16 @@ snapshots.desktopReport = await assertNoOverflow(homePage, "desktop report");
 await homePage.screenshot({ path: "desktop-report.png", fullPage: true });
 await homeContext.close();
 
-const discoveryRepairId = JSON.parse(runConvex("repairs:createRepair", {
-  description: "My bedroom doorknob is broken. The handle turns but the door won’t open properly.",
-  area: "Abuja",
-}));
-runConvex("discovery:findRepairPeople", { repairId: discoveryRepairId });
+// Reuse a persisted real Firecrawl discovery from the live deployment for visual QA.
+let discoveryRepairId = "jh74dydh1r74kmpz75epmxk69h8ewkqe";
+let discoveryView = JSON.parse(runConvex("repairs:getRepair", { repairId: discoveryRepairId }));
+if (!discoveryView?.candidates?.length) {
+  discoveryRepairId = JSON.parse(runConvex("repairs:createRepair", {
+    description: "My bedroom doorknob is broken. The handle turns but the door won’t open properly.",
+    area: "Abuja",
+  }));
+  runConvex("discovery:findRepairPeople", { repairId: discoveryRepairId });
+}
 
 const resultsContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 await resultsContext.addInitScript((id) => localStorage.setItem("patch.activeRepairId", id), discoveryRepairId);
