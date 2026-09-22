@@ -2,6 +2,7 @@ export type DiscoveredPerson = {
   name: string;
   website: string;
   email?: string;
+  imageUrl?: string;
   serviceEvidence: string;
   sourceUrl: string;
   sourceTitle?: string;
@@ -135,6 +136,22 @@ function evidenceFrom(content: string, category: string, fallback: string): stri
   return best ? best.slice(0, 190) : null;
 }
 
+function providerImage(metadata: any, origin: string) {
+  const raw =
+    metadata?.ogImage ||
+    metadata?.["og:image"] ||
+    metadata?.twitterImage ||
+    metadata?.["twitter:image"] ||
+    metadata?.image;
+  if (!raw) return undefined;
+  try {
+    const url = new URL(String(raw), origin);
+    return /^https?:$/.test(url.protocol) ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function providerName(title: string, domain: string, metadata: any) {
   const rawName = title.split(/[|–—-]/)[0]?.trim() || "";
   const marketingTitle = /^(transform|discover|explore|get|find|shop|quality|affordable|professional)\b/i.test(rawName);
@@ -238,11 +255,13 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
     }
 
     const name = providerName(title, domain, page?.metadata);
+    const imageUrl = providerImage(page?.metadata, resultUrl.origin);
 
     people.push({
       name: name.slice(0, 90),
       website: resultUrl.origin,
       email,
+      imageUrl,
       serviceEvidence: evidence,
       sourceUrl: resultUrl.toString(),
       sourceTitle: title.slice(0, 120),
