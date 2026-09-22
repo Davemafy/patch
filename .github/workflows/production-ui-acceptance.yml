@@ -1,0 +1,70 @@
+name: production-ui-acceptance
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live-ui:
+    if: contains(github.event.head_commit.message, '[ui-qa]')
+    runs-on: ubuntu-latest
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Deploy current backend and frontend
+        run: |
+          npx convex deploy
+          npx @convex-dev/static-hosting upload --build --component staticHosting
+      - name: Create controlled waiting fixture
+        id: fixture
+        shell: bash
+        run: |
+          setup="$(npx convex run acceptance:setupWebhookFixture '{}')"
+          repair_id="$(printf '%s' "$setup" | jq -r '.repairId')"
+          candidate_id="$(printf '%s' "$setup" | jq -r '.candidateId')"
+          test -n "$repair_id"
+          test -n "$candidate_id"
+          echo "repair_id=$repair_id" >> "$GITHUB_OUTPUT"
+          echo "candidate_id=$candidate_id" >> "$GITHUB_OUTPUT"
+          echo "Controlled fixture repair: $repair_id"
+      - name: Install Playwright browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium
+      - name: Exercise production UI and live Convex update
+        env:
+          REPAIR_ID: ${{ steps.fixture.outputs.repair_id }}
+          CANDIDATE_ID: ${{ steps.fixture.outputs.candidate_id }}
+        run: node scripts/production-qa.mjs
+      - name: Verify persisted conservative facts
+        shell: bash
+        run: |
+          view="$(npx convex run repairs:getRepair "{\"repairId\":\"${{ steps.fixture.outputs.repair_id }}\"}")"
+          printf '%s' "$view" | jq '{status:.repair.status,candidates:[.candidates[]|select(.reply != null)|{name,chosen,reply:{canTakeJob:.reply.canTakeJob,arrivalText:.reply.arrivalText,priceAmount:.reply.priceAmount,currency:.reply.currency,note:.reply.note,rawText:.reply.rawText,extractionStatus:.reply.extractionStatus}}]}'
+          test "$(printf '%s' "$view" | jq -r '.repair.status')" = "chosen"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.canTakeJob')" = "true"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.priceAmount')" = "12000"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.currency')" = "NGN"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.extractionStatus')" = "ok"
+          printf '%s' "$view" | jq -e '.candidates[0].reply.rawText | contains("CONTROLLED ACCEPTANCE TEST")' >/dev/null
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: patch-production-rendering
+          path: |
+            desktop-home.png
+            desktop-waiting.png
+            desktop-reply.png
+            desktop-chosen.png
+            mobile-home.png
+            mobile-chosen.png
+          if-no-files-found: ignore
