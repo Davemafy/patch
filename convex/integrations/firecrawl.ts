@@ -107,15 +107,46 @@ function evidenceFrom(content: string, category: string, fallback: string): stri
     .split(/[^a-z0-9]+/)
     .filter((term) => term.length > 3)
     .slice(0, 6);
+  const generic = new Set(["repair", "repairs", "service", "services", "handyman", "company", "provider"]);
+  const distinctive = terms.filter((term) => !generic.has(term));
   const lines = `${content}\n${fallback}`
     .split(/\n+/)
     .map(stripMarkdown)
     .filter((line) => line.length >= 16 && line.length <= 240);
+
+  const matches = (line: string, term: string) => {
+    const normalizedLine = line.toLowerCase();
+    if (normalizedLine.includes(term)) return true;
+    const compactLine = normalizedLine.replace(/[^a-z0-9]/g, "");
+    const compactTerm = term.replace(/[^a-z0-9]/g, "");
+    return compactTerm.length >= 5 && compactLine.includes(compactTerm);
+  };
+
   const scored = lines
-    .map((line) => ({ line, score: terms.reduce((sum, term) => sum + (line.toLowerCase().includes(term) ? 1 : 0), 0) }))
+    .map((line) => {
+      const distinctiveHits = distinctive.reduce((sum, term) => sum + (matches(line, term) ? 1 : 0), 0);
+      const genericHits = terms.reduce((sum, term) => sum + (generic.has(term) && matches(line, term) ? 1 : 0), 0);
+      return { line, distinctiveHits, score: distinctiveHits * 4 + genericHits };
+    })
+    .filter((item) => distinctive.length === 0 ? item.score > 0 : item.distinctiveHits > 0)
     .sort((a, b) => b.score - a.score || a.line.length - b.line.length);
-  const best = scored.find((item) => item.score > 0)?.line;
+
+  const best = scored[0]?.line;
   return best ? best.slice(0, 190) : null;
+}
+
+function providerName(title: string, domain: string, metadata: any) {
+  const rawName = title.split(/[|–—-]/)[0]?.trim() || "";
+  if (rawName && !/^(home|welcome|services?|contact us?)$/i.test(rawName)) return rawName;
+
+  const siteName = String(metadata?.ogSiteName || metadata?.siteName || metadata?.["og:site_name"] || "").trim();
+  if (siteName && !/^(home|welcome|services?)$/i.test(siteName)) return siteName;
+
+  const stem = domain.split(".")[0]
+    .replace(/(handyman|plumbing|plumber|locksmith|services|service|repairs|repair)/gi, " $1 ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return stem.replace(/\b\w/g, (char) => char.toUpperCase()) || domain;
 }
 
 async function scrape(url: string) {
@@ -205,10 +236,7 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
       email = emailFrom(contactMarkdown);
     }
 
-    const rawName = title.split(/[|–—-]/)[0]?.trim() || domain;
-    const name = /^(home|welcome|services?|contact us?)$/i.test(rawName)
-      ? domain.split(".")[0]
-      : rawName;
+    const name = providerName(title, domain, page?.metadata);
 
     people.push({
       name: name.slice(0, 90),
