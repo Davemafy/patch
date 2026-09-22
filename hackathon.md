@@ -110,10 +110,10 @@ This builds the Vite frontend, deploys the Convex backend, uploads the static fi
 ## Demo reset
 
 ```bash
-npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
+npx convex run repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
 ```
 
-This clears Patch repair/candidate/outreach/reply/event data while leaving external credentials and webhook configuration intact.
+When `DEMO_RESET_TOKEN` is configured, this clears Patch repair/candidate/outreach/reply/event data while leaving external credentials and webhook configuration intact.
 
 See `docs/DEMO.md` for the exact recording sequence.
 
@@ -122,6 +122,17 @@ See `docs/DEMO.md` for the exact recording sequence.
 https://aware-porpoise-430.convex.site
 
 This URL is served directly by Convex Static Hosting and is the recording/submission target.
+
+## Acceptance evidence
+
+The live deployment has been exercised against the real sponsor stack:
+
+- OpenAI GPT-OSS through Groq produced repair search context for the broken-doorknob example.
+- Firecrawl returned real source-backed repair-service candidates.
+- AgentMail successfully sent a real outreach email to a discovered direct provider.
+- The public `/agentmail/webhook` route rejects unsigned requests and accepts correctly signed controlled acceptance events.
+- A controlled inbound reply, explicitly labeled as test data, traverses the same webhook → Convex → GPT-OSS extraction → live React subscription path used by real replies.
+- The external provider contacted during acceptance had not replied during the test window, so Patch does not claim a real price, time, availability, or willingness from that provider.
 
 ## Known limitations
 
