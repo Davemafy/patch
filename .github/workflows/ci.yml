@@ -19,6 +19,7 @@ jobs:
           set -euo pipefail
           cat .patch-payload.part* | base64 -d > /tmp/patch-payload.tgz
           tar -xzf /tmp/patch-payload.tgz -C .
+          git checkout -- .github/workflows/ci.yml
           rm -f .patch-ready .patch-payload.part*
           git config user.name "Patch build bot"
           git config user.email "actions@users.noreply.github.com"
