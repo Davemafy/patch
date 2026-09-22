@@ -70,6 +70,9 @@ http.route({
 
     if (payload?.event_type !== "message.received") return new Response("ok", { status: 200 });
     const message = payload?.message || {};
+    const configuredInboxId = process.env.AGENTMAIL_INBOX_ID;
+    if (!configuredInboxId) return new Response("AGENTMAIL_INBOX_ID is not configured in Convex.", { status: 503 });
+    if (String(message.inbox_id || "") !== configuredInboxId) return new Response("ok", { status: 200 });
     const rawText = String(message.text || message.extracted_text || message.preview || "").trim();
     const extractText = String(message.extracted_text || message.text || message.preview || "").trim();
     if (!payload?.event_id || !message?.message_id || !rawText) return new Response("Missing message fields", { status: 400 });

@@ -1,0 +1,93 @@
+name: controlled-acceptance
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  round-trip:
+    if: contains(github.event.head_commit.message, '[controlled]')
+    runs-on: ubuntu-latest
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Ensure backend is current
+        run: npx convex deploy
+      - name: Run controlled AgentMail round trip
+        shell: bash
+        run: |
+          set -euo pipefail
+          agentmail_key="$(npx convex env get AGENTMAIL_API_KEY)"
+          primary_inbox="$(npx convex env get AGENTMAIL_INBOX_ID)"
+          test -n "$agentmail_key"
+          test -n "$primary_inbox"
+
+          secondary_json="$(curl --fail --silent --show-error \
+            -X POST https://api.agentmail.to/v0/inboxes \
+            -H "Authorization: Bearer $agentmail_key" \
+            -H 'Content-Type: application/json' \
+            --data "{\"display_name\":\"Patch Controlled Acceptance\",\"client_id\":\"patch-controlled-${GITHUB_RUN_ID}\"}")"
+          secondary_inbox="$(printf '%s' "$secondary_json" | jq -r '.inbox_id')"
+          secondary_email="$(printf '%s' "$secondary_json" | jq -r '.email')"
+          test -n "$secondary_inbox"
+          test -n "$secondary_email"
+
+          repair_id="$(npx convex run repairs:createRepair '{"description":"Controlled acceptance test: bedroom doorknob handle turns but the door won’t open properly.","area":"Abuja — controlled acceptance test"}' | tr -d '"\r\n')"
+          candidate_json="$(jq -nc --arg repairId "$repair_id" --arg email "$secondary_email" '{repairId:$repairId,category:"Controlled AgentMail acceptance",searchQuery:"controlled acceptance only",candidates:[{name:"Controlled AgentMail Test Inbox",website:"https://docs.agentmail.to",email:$email,serviceEvidence:"Controlled acceptance fixture — not a real repair provider.",sourceUrl:"https://docs.agentmail.to",sourceTitle:"Controlled acceptance fixture"}]}')"
+          npx convex run repairs:saveDiscoveredRepairPeople "$candidate_json"
+          view="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+          candidate_id="$(printf '%s' "$view" | jq -r '.candidates[0]._id')"
+          test -n "$candidate_id"
+
+          npx convex run mail:askRepairPeople "$(jq -nc --arg id "$candidate_id" '{candidateIds:[$id]}')"
+
+          received_message_id=""
+          for attempt in $(seq 1 12); do
+            messages="$(curl --fail --silent --show-error -H "Authorization: Bearer $agentmail_key" "https://api.agentmail.to/v0/inboxes/$secondary_inbox/messages?limit=20")"
+            received_message_id="$(printf '%s' "$messages" | jq -r '[.messages[] | select((.labels // []) | index("received"))][0].message_id // empty')"
+            if [ -n "$received_message_id" ]; then break; fi
+            sleep 5
+          done
+          test -n "$received_message_id"
+
+          reply_text="CONTROLLED ACCEPTANCE TEST — not a real contractor quote. Yes, I can take this test job. I can come tomorrow afternoon. Test callout is ₦12,000."
+          curl --fail --silent --show-error \
+            -X POST "https://api.agentmail.to/v0/inboxes/$secondary_inbox/messages/$received_message_id/reply" \
+            -H "Authorization: Bearer $agentmail_key" \
+            -H 'Content-Type: application/json' \
+            --data "$(jq -nc --arg text "$reply_text" '{text:$text}')" >/dev/null
+
+          reply_count=0
+          for attempt in $(seq 1 18); do
+            view="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+            reply_count="$(printf '%s' "$view" | jq '[.candidates[] | select(.reply != null)] | length')"
+            if [ "$reply_count" -gt 0 ]; then break; fi
+            sleep 5
+          done
+          test "$reply_count" -gt 0
+
+          view="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+          printf '%s' "$view" | jq '{repairId:.repair._id,status:.repair.status,candidates:[.candidates[]|select(.reply != null)|{candidateId:._id,name,reply:{canTakeJob:.reply.canTakeJob,arrivalText:.reply.arrivalText,priceAmount:.reply.priceAmount,currency:.reply.currency,note:.reply.note,rawText:.reply.rawText,extractionStatus:.reply.extractionStatus}}]}'
+          test "$(printf '%s' "$view" | jq -r '.repair.status')" = "options_ready"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.canTakeJob')" = "true"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.priceAmount')" = "12000"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.currency')" = "NGN"
+          test "$(printf '%s' "$view" | jq -r '.candidates[0].reply.extractionStatus')" = "ok"
+          printf '%s' "$view" | jq -e '.candidates[0].reply.rawText | contains("CONTROLLED ACCEPTANCE TEST")' >/dev/null
+
+          npx convex run repairs:chooseRepairPerson "$(jq -nc --arg repairId "$repair_id" --arg candidateId "$candidate_id" '{repairId:$repairId,candidateId:$candidateId}')"
+          chosen="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+          test "$(printf '%s' "$chosen" | jq -r '.repair.status')" = "chosen"
+          test "$(printf '%s' "$chosen" | jq -r '.candidates[0].chosen')" = "true"
+          refreshed="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+          test "$(printf '%s' "$refreshed" | jq -r '.repair.status')" = "chosen"
+          echo "Controlled round trip passed for repair $repair_id"
