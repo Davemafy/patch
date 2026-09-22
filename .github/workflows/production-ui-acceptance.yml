@@ -61,14 +61,12 @@ jobs:
         with:
           name: patch-production-rendering
           path: |
-            desktop-home.png
-            desktop-report.png
+            desktop-new-repair.png
             desktop-results.png
             desktop-waiting.png
             desktop-reply.png
             desktop-chosen.png
-            mobile-home.png
-            mobile-report.png
+            mobile-new-repair.png
             mobile-results.png
             mobile-chosen.png
           if-no-files-found: ignore
