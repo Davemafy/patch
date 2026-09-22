@@ -1,0 +1,57 @@
+name: acceptance-once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  real-patch-journey:
+    if: contains(github.event.head_commit.message, '[acceptance]')
+    runs-on: ubuntu-latest
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Create and discover real acceptance repair
+        id: repair
+        shell: bash
+        run: |
+          repair_id="$(npx convex run repairs:createRepair '{"description":"My bedroom doorknob is broken. The handle turns but the door won’t open properly.","area":"Abuja"}' | tr -d '"\r\n')"
+          test -n "$repair_id"
+          echo "repair_id=$repair_id" >> "$GITHUB_OUTPUT"
+          echo "Acceptance repair: $repair_id"
+          npx convex run discovery:findRepairPeople "{\"repairId\":\"$repair_id\"}"
+          view="$(npx convex run repairs:getRepair "{\"repairId\":\"$repair_id\"}")"
+          provider="$(printf '%s' "$view" | jq -r '.candidates[] | select((.website | contains("metrohandyman.ng")) and (.email != null) and (.email != "")) | ._id' | head -n1)"
+          provider_name="$(printf '%s' "$view" | jq -r '.candidates[] | select((.website | contains("metrohandyman.ng")) and (.email != null) and (.email != "")) | .name' | head -n1)"
+          test -n "$provider"
+          echo "candidate_id=$provider" >> "$GITHUB_OUTPUT"
+          echo "Direct provider selected: $provider_name"
+      - name: Send one real AgentMail request
+        shell: bash
+        run: |
+          npx convex run mail:askRepairPeople "{\"candidateIds\":[\"${{ steps.repair.outputs.candidate_id }}\"]}"
+          view="$(npx convex run repairs:getRepair "{\"repairId\":\"${{ steps.repair.outputs.repair_id }}\"}")"
+          printf '%s' "$view" | jq '{status:.repair.status,candidates:[.candidates[]|select(.outreach != null)|{name,outreach:{status:.outreach.status}}]}'
+      - name: Check for real reply
+        shell: bash
+        run: |
+          for attempt in $(seq 1 12); do
+            view="$(npx convex run repairs:getRepair "{\"repairId\":\"${{ steps.repair.outputs.repair_id }}\"}")"
+            reply_count="$(printf '%s' "$view" | jq '[.candidates[] | select(.reply != null)] | length')"
+            if [ "$reply_count" -gt 0 ]; then
+              printf '%s' "$view" | jq '{repairId:.repair._id,status:.repair.status,replies:[.candidates[]|select(.reply != null)|{candidateId:._id,name,reply:{canTakeJob:.reply.canTakeJob,arrivalText:.reply.arrivalText,priceAmount:.reply.priceAmount,currency:.reply.currency,note:.reply.note,rawText:.reply.rawText,extractionStatus:.reply.extractionStatus}}]}'
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "No external provider reply received during the acceptance window."
+          npx convex run repairs:getRepair "{\"repairId\":\"${{ steps.repair.outputs.repair_id }}\"}" | jq '{repairId:.repair._id,status:.repair.status,candidates:[.candidates[]|{candidateId:._id,name,outreachStatus:(.outreach.status // null),hasReply:(.reply != null)}]}'

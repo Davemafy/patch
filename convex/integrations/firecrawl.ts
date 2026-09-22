@@ -30,6 +30,8 @@ const NON_PROVIDER_HOSTS = new Set([
   "cybo.com",
   "businesslist.com.ng",
   "play.google.com",
+  "directory.africa-business.com",
+  "africa-business.com",
 ]);
 
 function isProviderHost(hostname: string) {

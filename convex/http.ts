@@ -6,7 +6,8 @@ import { httpAction } from "./_generated/server";
 const http = httpRouter();
 
 function bytesFromBase64(value: string) {
-  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const normalized = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
   const binary = atob(normalized);
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
