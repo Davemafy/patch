@@ -43,7 +43,26 @@ await homePage.goto(PATCH_URL, { waitUntil: "networkidle" });
 await homePage.locator(".hero-copy h1").waitFor({ timeout: 30000 });
 snapshots.desktopHome = await assertNoOverflow(homePage, "desktop home");
 await homePage.screenshot({ path: "desktop-home.png", fullPage: true });
+await homePage.getByRole("button", { name: "Start a repair" }).click();
+await homePage.locator(".report-card").waitFor({ timeout: 30000 });
+snapshots.desktopReport = await assertNoOverflow(homePage, "desktop report");
+await homePage.screenshot({ path: "desktop-report.png", fullPage: true });
 await homeContext.close();
+
+const discoveryRepairId = JSON.parse(runConvex("repairs:createRepair", {
+  description: "My bedroom doorknob is broken. The handle turns but the door won’t open properly.",
+  area: "Abuja",
+}));
+runConvex("discovery:findRepairPeople", { repairId: discoveryRepairId });
+
+const resultsContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+await resultsContext.addInitScript((id) => localStorage.setItem("patch.activeRepairId", id), discoveryRepairId);
+const resultsPage = await resultsContext.newPage();
+await resultsPage.goto(PATCH_URL, { waitUntil: "networkidle" });
+await resultsPage.locator(".results-v2").waitFor({ timeout: 60000 });
+snapshots.desktopResults = await assertNoOverflow(resultsPage, "desktop results");
+await resultsPage.screenshot({ path: "desktop-results.png", fullPage: true });
+await resultsContext.close();
 
 const desktop = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 await desktop.addInitScript((id) => localStorage.setItem("patch.activeRepairId", id), repairId);
@@ -84,7 +103,20 @@ await mobileHome.goto(PATCH_URL, { waitUntil: "networkidle" });
 await mobileHome.locator(".hero-copy h1").waitFor({ timeout: 30000 });
 snapshots.mobileHome = await assertNoOverflow(mobileHome, "mobile home");
 await mobileHome.screenshot({ path: "mobile-home.png", fullPage: true });
+await mobileHome.getByRole("button", { name: "Start a repair" }).click();
+await mobileHome.locator(".report-card").waitFor({ timeout: 30000 });
+snapshots.mobileReport = await assertNoOverflow(mobileHome, "mobile report");
+await mobileHome.screenshot({ path: "mobile-report.png", fullPage: true });
 await mobileHomeContext.close();
+
+const mobileResultsContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+await mobileResultsContext.addInitScript((id) => localStorage.setItem("patch.activeRepairId", id), discoveryRepairId);
+const mobileResults = await mobileResultsContext.newPage();
+await mobileResults.goto(PATCH_URL, { waitUntil: "networkidle" });
+await mobileResults.locator(".results-v2").waitFor({ timeout: 30000 });
+snapshots.mobileResults = await assertNoOverflow(mobileResults, "mobile results");
+await mobileResults.screenshot({ path: "mobile-results.png", fullPage: true });
+await mobileResultsContext.close();
 
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
 await mobile.addInitScript((id) => localStorage.setItem("patch.activeRepairId", id), repairId);
