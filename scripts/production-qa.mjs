@@ -1,4 +1,4 @@
-// Production visual acceptance for the industrial Patch visual system.
+// Production visual acceptance for the content-led consumer Patch UI.
 import { execFileSync } from "node:child_process";
 import { chromium } from "playwright";
 
