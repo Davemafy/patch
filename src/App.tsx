@@ -53,6 +53,39 @@ function hostLabel(value: string) {
   catch { return value; }
 }
 
+function providerLabel(name: string, website: string) {
+  const trimmed = name.trim();
+  if (trimmed.includes(" ") && /[A-Z]/.test(trimmed)) return trimmed;
+
+  const stem = hostLabel(website).split(".")[0] || trimmed;
+  const spaced = stem
+    .replace(/(handyman|plumbing|plumber|locksmith|repairs?|services?|doors?|electric|electrical|design|mart)/gi, " $1 ")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return spaced.replace(/\b\w/g, (char) => char.toUpperCase()) || trimmed;
+}
+
+function evidenceFor(category: string | undefined, evidence: string) {
+  const cleaned = evidence
+    .replace(/^[\s>*#"'“”‘’–—-]+/, "")
+    .replace(/[“”]/g, "")
+    .trim();
+
+  if (!category) return cleaned;
+  const generic = new Set(["repair", "repairs", "service", "services", "company", "provider", "handyman"]);
+  const terms = category
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((term) => term.length > 3 && !generic.has(term));
+
+  if (!terms.length) return cleaned;
+  const normalized = cleaned.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const matches = terms.some((term) => normalized.includes(term.replace(/[^a-z0-9]/g, "")));
+  return matches ? cleaned : "";
+}
+
 function Mark() {
   return <span className="mark" aria-label="Patch">Patch<span>.</span></span>;
 }
@@ -339,6 +372,7 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
                 <ProviderRow
                   key={candidate._id}
                   candidate={candidate}
+                  category={repair.category}
                   index={index}
                   selected={selected.includes(candidate._id)}
                   onToggle={() => setSelected((current) =>
@@ -403,28 +437,32 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
 
 function ProviderRow({
   candidate,
+  category,
   index,
   selected,
   onToggle,
 }: {
   candidate: ViewCandidate;
+  category?: string;
   index: number;
   selected: boolean;
   onToggle: () => void;
 }) {
   const canContact = Boolean(candidate.email);
+  const displayName = providerLabel(candidate.name, candidate.website);
+  const evidence = evidenceFor(category, candidate.serviceEvidence);
   return (
     <article className={`provider-row ${selected ? "is-selected" : ""}`}>
       <span className="provider-index">{String(index + 1).padStart(2, "0")}</span>
       <div className="provider-body">
-        <a className="provider-name" href={candidate.sourceUrl} target="_blank" rel="noreferrer">{candidate.name}</a>
-        <p className="provider-evidence">“{candidate.serviceEvidence}”</p>
+        <a className="provider-name" href={candidate.sourceUrl} target="_blank" rel="noreferrer">{displayName}</a>
+        {evidence && <p className="provider-evidence">“{evidence}”</p>}
         <div className="provider-meta">
           <span>{hostLabel(candidate.website)}</span>
           <span>{canContact ? "Reachable by email" : "No public email"}</span>
         </div>
       </div>
-      <button className="provider-toggle" onClick={onToggle} disabled={!canContact} aria-pressed={selected} aria-label={selected ? `Remove ${candidate.name}` : `Ask ${candidate.name}`}>
+      <button className="provider-toggle" onClick={onToggle} disabled={!canContact} aria-pressed={selected} aria-label={selected ? `Remove ${displayName}` : `Ask ${displayName}`}>
         {selected ? <Tick /> : <span>+</span>}
       </button>
     </article>
@@ -484,7 +522,7 @@ function ReplyBlock({ candidate, onChoose, busy }: { candidate: ViewCandidate; o
     <article className={`reply-block ${unavailable ? "is-unavailable" : ""}`}>
       <div className="reply-provider">
         <span>{hostLabel(candidate.website)}</span>
-        <h3>{candidate.name}</h3>
+        <h3>{providerLabel(candidate.name, candidate.website)}</h3>
       </div>
 
       <blockquote className="reply-quote">“{reply.rawText}”</blockquote>
@@ -505,7 +543,7 @@ function ReplyBlock({ candidate, onChoose, busy }: { candidate: ViewCandidate; o
 
       {!unavailable && (
         <button className="choose-action" onClick={onChoose} disabled={busy}>
-          {busy ? "Saving…" : <>Choose {candidate.name.split(" ")[0]} <Arrow /></>}
+          {busy ? "Saving…" : <>Choose {providerLabel(candidate.name, candidate.website).split(" ")[0]} <Arrow /></>}
         </button>
       )}
     </article>
@@ -526,7 +564,7 @@ function DoneScreen({ repair, candidate, onNew }: { repair: RepairView["repair"]
 
         <section className="done-stage">
           <span className="qa-label">Sorted</span>
-          <h1>{candidate.name}</h1>
+          <h1>{providerLabel(candidate.name, candidate.website)}</h1>
           <p className="done-line">
             {reply?.arrivalText ? <>said <em>{reply.arrivalText}</em></> : <>is your choice</>}
             {reply?.priceAmount != null ? <> · <strong>{money(reply.priceAmount, reply.currency)}</strong></> : null}
