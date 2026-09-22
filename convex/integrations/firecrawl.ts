@@ -32,11 +32,27 @@ const NON_PROVIDER_HOSTS = new Set([
   "play.google.com",
   "directory.africa-business.com",
   "africa-business.com",
+  "starofservice.com.ng",
+  "starofservice.com",
+  "viscorner.com",
+  "anyservice.ng",
+  "hotfrog.com",
+  "worldorgs.com",
+  "connectnigeria.com",
 ]);
 
 function isProviderHost(hostname: string) {
   const host = hostname.replace(/^www\./, "").toLowerCase();
   return ![...NON_PROVIDER_HOSTS].some((blocked) => host === blocked || host.endsWith(`.${blocked}`));
+}
+
+const DIRECTORY_TITLE = /\b(?:top\s*\d*|best|list of|find\s+(?:reliable|verified|local)?|verified|compare|directory|marketplace|professionals? near|services? in [a-z]|price online|reviews? and ratings?)\b/i;
+
+function looksLikeDirectProvider(result: FirecrawlResult, title: string, url: URL) {
+  const combined = `${title} ${result.title || ""} ${result.description || ""} ${url.pathname}`;
+  if (DIRECTORY_TITLE.test(combined)) return false;
+  if (/\/(?:category|categories|directory|professionals|providers|search|marketplace)(?:\/|$)/i.test(url.pathname)) return false;
+  return true;
 }
 
 function key() {
@@ -158,9 +174,11 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
 
     if (!areaMatch) continue;
     const title = String(page?.metadata?.title || result.title || domain).trim();
+    if (!looksLikeDirectProvider(result, title, resultUrl)) continue;
     const evidence = evidenceFrom(markdown, category, result.description || title);
     if (!evidence) continue;
-    const name = title.split(/[|–—-]/)[0]?.trim() || domain;
+    const rawName = title.split(/[|–—-]/)[0]?.trim() || domain;
+    const name = /^(home|welcome|services?|contact us?)$/i.test(rawName) ? domain.split(".")[0] : rawName;
 
     people.push({
       name: name.slice(0, 90),
