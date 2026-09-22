@@ -17,7 +17,7 @@ A website can establish service fit. Only a real reply can establish current ava
 - `@convex-dev/static-hosting` for the required `*.convex.site` frontend
 - Firecrawl v2 search/scrape for public repair-service evidence and contact discovery
 - AgentMail for outbound requests and inbound email replies
-- OpenAI Responses API structured output for repair search context and conservative reply extraction
+- OpenAI GPT-OSS 20B served through Groq’s OpenAI-compatible Responses API with strict Structured Outputs for repair search context and conservative reply extraction
 
 ## Local setup
 
@@ -45,8 +45,7 @@ VITE_CONVEX_URL
 Server-side Convex environment:
 
 ```text
-OPENAI_API_KEY
-OPENAI_MODEL=gpt-5-mini
+GROQ_API_KEY
 FIRECRAWL_API_KEY
 AGENTMAIL_API_KEY
 AGENTMAIL_INBOX_ID
@@ -59,7 +58,7 @@ Do not put sponsor keys in `VITE_*` variables. Anything prefixed with `VITE_` is
 Set production values with the Convex dashboard or CLI, for example:
 
 ```bash
-npx convex env set OPENAI_API_KEY "..." --prod
+npx convex env set GROQ_API_KEY "..." --prod
 npx convex env set FIRECRAWL_API_KEY "..." --prod
 npx convex env set AGENTMAIL_API_KEY "..." --prod
 npx convex env set AGENTMAIL_INBOX_ID "..." --prod
@@ -87,7 +86,7 @@ Owns durable repair truth: repair creation, discovery results, outreach idempote
 
 ### `convex/discovery.ts`
 
-Action that asks OpenAI for search context, calls Firecrawl, then stores source-backed candidates in Convex.
+Action that asks OpenAI GPT-OSS 20B through Groq’s Responses API for search context, calls Firecrawl, then stores source-backed candidates in Convex.
 
 ### `convex/mail.ts`
 
@@ -129,7 +128,7 @@ https://<deployment>.convex.site
 npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
 ```
 
-The reset is token-protected and clears Patch’s demo data only. It does not change AgentMail, Firecrawl, or OpenAI configuration.
+The reset is token-protected and clears Patch’s demo data only. It does not change AgentMail, Firecrawl, or Groq/OpenAI-model configuration.
 
 ## Live app
 

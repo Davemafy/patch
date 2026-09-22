@@ -1,8 +1,8 @@
 type JsonSchema = Record<string, unknown>;
 
 function getKey() {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY is not configured in Convex.");
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY is not configured in Convex.");
   return key;
 }
 
@@ -13,19 +13,18 @@ function outputText(payload: any): string {
       if (content?.type === "output_text" && typeof content.text === "string") return content.text;
     }
   }
-  throw new Error("OpenAI returned no structured output.");
+  throw new Error("OpenAI GPT-OSS via Groq returned no structured output.");
 }
 
 async function structured<T>(name: string, schema: JsonSchema, instructions: string, input: string): Promise<T> {
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetch("https://api.groq.com/openai/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getKey()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      store: false,
+      model: "openai/gpt-oss-20b",
       input: [
         { role: "system", content: [{ type: "input_text", text: instructions }] },
         { role: "user", content: [{ type: "input_text", text: input }] },
@@ -42,7 +41,7 @@ async function structured<T>(name: string, schema: JsonSchema, instructions: str
   });
 
   const json = await response.json();
-  if (!response.ok) throw new Error(`OpenAI request failed (${response.status}): ${json?.error?.message || "unknown error"}`);
+  if (!response.ok) throw new Error(`Groq Responses API request failed (${response.status}): ${json?.error?.message || "unknown error"}`);
   return JSON.parse(outputText(json)) as T;
 }
 

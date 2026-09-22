@@ -48,7 +48,7 @@ The webhook is verified with its Svix signature before the message is processed.
 
 ### OpenAI
 
-OpenAI performs two narrow interpretation jobs:
+Patch uses OpenAI’s `openai/gpt-oss-20b` model for two narrow interpretation jobs. Inference is served through Groq’s OpenAI-compatible Responses API using `GROQ_API_KEY`; the model itself remains OpenAI GPT-OSS:
 
 1. Turn a consumer repair description into a useful service category/search query for Firecrawl.
 2. Extract only facts actually stated in a repair-person reply: whether they can take the job, the arrival wording, price, currency, and any explicit condition.
@@ -70,7 +70,7 @@ A website never makes someone “available” in Patch. A model never fills in a
 - duplicate inbound webhooks are idempotent;
 - duplicate outreach clicks do not produce duplicate sends;
 - late replies cannot overwrite the chosen person;
-- OpenAI extraction failure preserves the raw email;
+- OpenAI GPT-OSS extraction failure preserves the raw email;
 - Firecrawl failure produces a retryable human state instead of crashing;
 - candidates without a public email remain visible as source-backed matches but cannot be selected for email outreach;
 - missing server secrets fail with an actionable message;
@@ -87,8 +87,7 @@ npm run dev
 Set the following on the Convex deployment:
 
 ```text
-OPENAI_API_KEY
-OPENAI_MODEL=gpt-5-mini
+GROQ_API_KEY
 FIRECRAWL_API_KEY
 AGENTMAIL_API_KEY
 AGENTMAIL_INBOX_ID
