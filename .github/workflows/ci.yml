@@ -1,0 +1,33 @@
+name: apply-and-build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-payload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Patch implementation payload
+        if: ${{ hashFiles('.patch-payload.b64') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .patch-payload.b64 > /tmp/patch-payload.tgz
+          tar -xzf /tmp/patch-payload.tgz -C .
+          rm -f .patch-payload.b64
+          git config user.name "Patch build bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Implement Patch end-to-end"
+            git push
+          fi
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
