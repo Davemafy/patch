@@ -130,10 +130,10 @@ function HomeScreen({ onStart }: { onStart: () => void }) {
       <header className="topbar"><Logo /><span className="top-note">Real repair people. Real replies.</span></header>
       <section className="hero hero-v2">
         <div className="hero-copy">
-          <p className="eyebrow">Repair concierge for the small stuff</p>
-          <h1>Skip the<br /><em>calling around.</em></h1>
-          <p className="lede">Describe what broke once. Patch finds direct providers, asks for real price and timing, then brings their replies back into one place.</p>
-          <button className="primary big" onClick={onStart}>Start a repair <ArrowIcon /></button>
+          <p className="eyebrow">Something broke at home?</p>
+          <h1>Don’t call<br /><em>around.</em></h1>
+          <p className="lede">Tell Patch once. We find people who handle it, ask what they charge and when they can come, then bring the real replies back here.</p>
+          <button className="primary big" onClick={onStart}>Tell Patch what broke <ArrowIcon /></button>
           <div className="hero-proof">
             <span><b>01</b> Find direct providers</span>
             <span><b>02</b> Ask them by email</span>
@@ -142,14 +142,14 @@ function HomeScreen({ onStart }: { onStart: () => void }) {
         </div>
 
         <aside className="hero-demo" aria-label="Example Patch flow">
-          <div className="demo-top"><span>Example flow</span><small>Broken doorknob · Abuja</small></div>
-          <div className="demo-step"><span className="demo-icon">01</span><div><strong>3 direct providers found</strong><small>Public service evidence checked</small></div></div>
-          <div className="demo-step"><span className="demo-icon">02</span><div><strong>2 requests sent</strong><small>Through AgentMail</small></div></div>
+          <div className="demo-top"><span>PATCH / LIVE DESK</span><small>Broken doorknob · Abuja</small></div>
+          <div className="demo-step"><span className="demo-icon">01</span><div><strong>Found people who repair doors</strong><small>Service pages checked</small></div></div>
+          <div className="demo-step"><span className="demo-icon">02</span><div><strong>Asked for price + time</strong><small>Ordinary email. No Patch account.</small></div></div>
           <div className="demo-reply">
-            <span>Reply</span>
-            <strong>“Tomorrow afternoon. ₦12,000 callout.”</strong>
+            <div className="demo-reply-head"><span>REAL REPLY</span><small>Tunde Repairs</small></div>
+            <strong>“Yes, I can come around 2. Callout is ₦12,000.”</strong>
           </div>
-          <div className="demo-truth">Website proves service fit. Only the reply can prove price or timing.</div>
+          <div className="demo-truth"><b>Patch rule:</b> the web can prove service fit. Only the person can prove price or timing.</div>
         </aside>
       </section>
       <footer className="home-footer"><span>No directory browsing.</span><span>No invented estimates.</span><span>You choose.</span></footer>
