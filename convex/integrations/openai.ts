@@ -62,6 +62,7 @@ export async function understandRepair(description: string, area: string) {
       "Do not diagnose the root cause and do not claim urgency, price, availability, or safety facts.",
       "category should be a short trade/service phrase a real repair business would use.",
       "searchQuery should help find nearby businesses that publicly offer the needed service, including the user's area.",
+      "Prefer direct service-provider websites over marketplaces, directories, social profiles, or generic listing pages.",
     ].join(" "),
     `Area: ${area}\nProblem: ${description}`,
   );

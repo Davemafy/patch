@@ -14,6 +14,21 @@ type FirecrawlResult = {
   markdown?: string;
 };
 
+const NON_PROVIDER_HOSTS = new Set([
+  "jiji.ng",
+  "instagram.com",
+  "facebook.com",
+  "linkedin.com",
+  "youtube.com",
+  "tiktok.com",
+  "pinterest.com",
+]);
+
+function isProviderHost(hostname: string) {
+  const host = hostname.replace(/^www\./, "").toLowerCase();
+  return ![...NON_PROVIDER_HOSTS].some((blocked) => host === blocked || host.endsWith(`.${blocked}`));
+}
+
 function key() {
   const value = process.env.FIRECRAWL_API_KEY;
   if (!value) throw new Error("FIRECRAWL_API_KEY is not configured in Convex.");
@@ -91,15 +106,20 @@ async function scrape(url: string) {
 }
 
 export async function findRepairPeople(searchQuery: string, category: string): Promise<DiscoveredPerson[]> {
-  const data = await firecrawl("/search", { query: searchQuery, limit: 7, sources: ["web"] });
-  const results: FirecrawlResult[] = Array.isArray(data?.web) ? data.web : [];
+  const queries = [searchQuery, `${searchQuery} contact email`];
+  const results: FirecrawlResult[] = [];
+  for (const query of queries) {
+    const data = await firecrawl("/search", { query, limit: 10, sources: ["web"] });
+    if (Array.isArray(data?.web)) results.push(...data.web);
+  }
+
   const seen = new Set<string>();
   const people: DiscoveredPerson[] = [];
 
   for (const result of results) {
     if (people.length >= 4) break;
     const resultUrl = safeUrl(result.url);
-    if (!resultUrl) continue;
+    if (!resultUrl || !isProviderHost(resultUrl.hostname)) continue;
     const domain = resultUrl.hostname.replace(/^www\./, "");
     if (seen.has(domain)) continue;
     seen.add(domain);
