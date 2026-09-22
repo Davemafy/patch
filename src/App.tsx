@@ -126,20 +126,33 @@ function App() {
 
 function HomeScreen({ onStart }: { onStart: () => void }) {
   return (
-    <main className="page home-page">
-      <header className="topbar"><Logo /><span className="top-note">Small home repairs, sorted.</span></header>
-      <section className="hero">
+    <main className="page home-page home-v2">
+      <header className="topbar"><Logo /><span className="top-note">Real repair people. Real replies.</span></header>
+      <section className="hero hero-v2">
         <div className="hero-copy">
-          <p className="eyebrow">When something at home gives up</p>
-          <h1>Something<br />broke?</h1>
-          <p className="lede">Tell Patch what happened. We’ll find people who handle it, ask what they charge and when they can come, then bring the real replies back here.</p>
-          <button className="primary big" onClick={onStart}>Tell Patch what broke <ArrowIcon /></button>
+          <p className="eyebrow">Repair concierge for the small stuff</p>
+          <h1>Skip the<br /><em>calling around.</em></h1>
+          <p className="lede">Describe what broke once. Patch finds direct providers, asks for real price and timing, then brings their replies back into one place.</p>
+          <button className="primary big" onClick={onStart}>Start a repair <ArrowIcon /></button>
+          <div className="hero-proof">
+            <span><b>01</b> Find direct providers</span>
+            <span><b>02</b> Ask them by email</span>
+            <span><b>03</b> Compare what they actually said</span>
+          </div>
         </div>
-        <div className="examples" aria-label="Examples of repairs">
-          <span>Broken doorknob</span><span>Leaking tap</span><span>Faulty socket</span><span>AC not cooling</span><span>Stuck door</span>
-        </div>
+
+        <aside className="hero-demo" aria-label="Example Patch flow">
+          <div className="demo-top"><span>Example flow</span><small>Broken doorknob · Abuja</small></div>
+          <div className="demo-step"><span className="demo-icon">01</span><div><strong>3 direct providers found</strong><small>Public service evidence checked</small></div></div>
+          <div className="demo-step"><span className="demo-icon">02</span><div><strong>2 requests sent</strong><small>Through AgentMail</small></div></div>
+          <div className="demo-reply">
+            <span>Reply</span>
+            <strong>“Tomorrow afternoon. ₦12,000 callout.”</strong>
+          </div>
+          <div className="demo-truth">Website proves service fit. Only the reply can prove price or timing.</div>
+        </aside>
       </section>
-      <footer className="home-footer"><span>No calls to make.</span><span>Real replies, not estimates.</span><span>You choose who comes.</span></footer>
+      <footer className="home-footer"><span>No directory browsing.</span><span>No invented estimates.</span><span>You choose.</span></footer>
     </main>
   );
 }
@@ -181,22 +194,34 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
   }
 
   return (
-    <main className="page narrow-page">
+    <main className="page report-page">
       <header className="topbar"><button className="text-button" onClick={onCancel}>Back</button><Logo /><span /></header>
-      <form className="report-form" onSubmit={submit}>
-        <div className="form-heading"><p className="eyebrow">Start a repair</p><h1>What broke?</h1><p>Describe it the way you’d tell a neighbour. No diagnosis needed.</p></div>
-        <label className="field"><span>What happened</span><textarea rows={5} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. My bedroom doorknob is broken. The handle turns but the door won’t open properly." maxLength={1200} required /></label>
-        <label className="field"><span>Your area</span><input value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. Wuse 2, Abuja" maxLength={120} required /></label>
-        <div className="photo-row">
-          <div><strong>Add a photo</strong><span>Optional · up to 5 MB</span></div>
-          <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
-          <button type="button" className="secondary" onClick={() => photoInput.current?.click()}>{photo ? "Change photo" : "Choose photo"}</button>
-        </div>
-        {photo && <div className="selected-file"><span>{photo.name}</span><button type="button" onClick={() => setPhoto(null)}>Remove</button></div>}
-        {error && <p className="error-callout">{error}</p>}
-        <button className="primary big full" disabled={busy}>{busy ? "Starting…" : <>Find people who can fix it <ArrowIcon /></>}</button>
-        <p className="truth-note">Patch will only show a price or time after a real person replies with it.</p>
-      </form>
+      <section className="report-shell">
+        <aside className="report-intro">
+          <p className="eyebrow">Start a repair</p>
+          <h1>One problem.<br />Two details.</h1>
+          <p>Tell Patch what happened and where you are. That is enough to start finding people who actually handle it.</p>
+          <div className="report-promises">
+            <span><b>01</b> No diagnosis needed</span>
+            <span><b>02</b> No price guessed from the web</span>
+            <span><b>03</b> Real replies stay attached to the repair</span>
+          </div>
+        </aside>
+
+        <form className="report-form report-card" onSubmit={submit}>
+          <label className="field"><span>What happened</span><textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="My bedroom doorknob is broken. The handle turns but the door won’t open properly." maxLength={1200} required /></label>
+          <label className="field"><span>Your area</span><input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Wuse 2, Abuja" maxLength={120} required /></label>
+          <div className="photo-row">
+            <div><strong>Add a photo</strong><span>Optional · up to 5 MB</span></div>
+            <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+            <button type="button" className="secondary" onClick={() => photoInput.current?.click()}>{photo ? "Change" : "Add photo"}</button>
+          </div>
+          {photo && <div className="selected-file"><span>{photo.name}</span><button type="button" onClick={() => setPhoto(null)}>Remove</button></div>}
+          {error && <p className="error-callout">{error}</p>}
+          <button className="primary big full" disabled={busy}>{busy ? "Starting…" : <>Find people who can fix it <ArrowIcon /></>}</button>
+          <p className="truth-note">Price and timing stay blank until a person actually replies.</p>
+        </form>
+      </section>
     </main>
   );
 }
@@ -220,6 +245,8 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
 
   const replies = candidates.filter((candidate) => candidate.reply);
   const chosen = candidates.find((candidate) => candidate.chosen);
+  const contactableCandidates = candidates.filter((candidate) => candidate.email);
+  const shownCandidates = contactableCandidates.length > 0 ? contactableCandidates : candidates;
 
   async function retryDiscovery() {
     setBusy(true); setLocalError(null);
@@ -270,15 +297,19 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
       )}
 
       {peopleFound && (
-        <section className="results-section">
-          <div className="section-heading"><div><p className="eyebrow">People found</p><h2>Who should we ask?</h2></div><p>These sites say they handle this kind of work. They have not said they’re available yet.</p></div>
+        <section className="results-section results-v2">
+          <div className="section-heading">
+            <div><p className="eyebrow">Direct matches</p><h2>{shownCandidates.length} {shownCandidates.length === 1 ? "provider" : "providers"} we can reach.</h2></div>
+            <p>Each one has public evidence for this kind of work. None is treated as available until they reply.</p>
+          </div>
           <div className="people-list">
-            {candidates.map((candidate) => (
+            {shownCandidates.map((candidate) => (
               <CandidateRow key={candidate._id} candidate={candidate} selected={selected.includes(candidate._id)} onToggle={() => setSelected((current) => current.includes(candidate._id) ? current.filter((id) => id !== candidate._id) : [...current, candidate._id])} />
             ))}
           </div>
+          {candidates.length > shownCandidates.length && <p className="secondary-results">{candidates.length - shownCandidates.length} other source match{candidates.length - shownCandidates.length === 1 ? "" : "es"} hidden because Patch could not find a public email.</p>}
           {(localError || candidates.some((c) => c.outreach?.error)) && <p className="error-callout">{localError || "One of the messages couldn't be sent."}</p>}
-          <button className="primary big" disabled={!selected.length || busy} onClick={sendRequests}>{busy ? "Sending…" : <>Ask {selected.length || "them"} for price and time <ArrowIcon /></>}</button>
+          <button className="primary big results-cta" disabled={!selected.length || busy} onClick={sendRequests}>{busy ? "Sending…" : <>Ask {selected.length || "them"} for price and time <ArrowIcon /></>}</button>
         </section>
       )}
 
