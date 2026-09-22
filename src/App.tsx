@@ -60,6 +60,33 @@ function CheckIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>;
 }
 
+function hostLabel(value: string) {
+  try { return new URL(value).hostname.replace(/^www\./, ""); }
+  catch { return value; }
+}
+
+function ProgressRail({ status }: { status: RepairView["repair"]["status"] }) {
+  const stages = [
+    ["reported", "Reported"],
+    ["looking", "Sources found"],
+    ["waiting", "Asked"],
+    ["options_ready", "Reply received"],
+    ["chosen", "Chosen"],
+  ] as const;
+  const order = ["reported", "looking", "waiting", "options_ready", "chosen"];
+  const current = order.indexOf(status);
+  return (
+    <nav className="progress-rail" aria-label="Repair progress">
+      {stages.map(([key, label], index) => (
+        <div key={key} className={index <= current ? "progress-step active" : "progress-step"}>
+          <span>{index < current ? <CheckIcon /> : index + 1}</span>
+          <strong>{label}</strong>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
 function App() {
   const [activeRepairId, setActiveRepairId] = useState<string | null>(() => localStorage.getItem(ACTIVE_REPAIR_KEY));
   const [reporting, setReporting] = useState(false);
@@ -229,6 +256,7 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
         <div><p className="eyebrow">Your repair</p><h1>{repair.description}</h1><p className="repair-area">{repair.area}</p></div>
         {repair.photoUrl && <img className="repair-photo" src={repair.photoUrl} alt="Repair" />}
       </section>
+      <ProgressRail status={repair.status} />
 
       {finding && <LookingState />}
 
@@ -286,11 +314,14 @@ function CandidateRow({ candidate, selected, onToggle }: { candidate: ViewCandid
     <div className={`candidate-row ${selected ? "selected" : ""}`}>
       <button className="candidate-select" onClick={onToggle} disabled={!canContact} aria-pressed={selected}>
         <span className="check-box">{selected && <CheckIcon />}</span>
-        <span className="candidate-main"><strong>{candidate.name}</strong><span>{candidate.serviceEvidence}</span></span>
+        <span className="candidate-main">
+          <span className="candidate-title-line"><strong>{candidate.name}</strong><small>{hostLabel(candidate.website)}</small></span>
+          <span className="evidence-quote">“{candidate.serviceEvidence}”</span>
+        </span>
       </button>
       <div className="candidate-meta">
-        <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">See source</a>
-        <span>{canContact ? "Email found" : "No public email found"}</span>
+        <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">Open evidence ↗</a>
+        <span className={canContact ? "contact-proof" : ""}>{canContact ? "Public email found" : "No public email found"}</span>
       </div>
     </div>
   );
@@ -299,9 +330,15 @@ function CandidateRow({ candidate, selected, onToggle }: { candidate: ViewCandid
 function LookingState() {
   return (
     <section className="looking-state">
-      <div className="pulse-ring"><span /></div>
-      <div><p className="eyebrow">Looking nearby</p><h2>Finding people who handle this.</h2><p>We’re checking public service pages for a few strong matches — not building a giant directory.</p></div>
-      <div className="search-lines"><i /><i /><i /></div>
+      <div className="looking-copy">
+        <div className="pulse-ring"><span /></div>
+        <div><p className="eyebrow">Patch is working</p><h2>From one sentence to real people.</h2><p>We’re turning the repair into search context, checking public service pages, and keeping only evidence-backed matches.</p></div>
+      </div>
+      <div className="operation-feed" aria-label="Live repair search">
+        <div className="operation-row done"><span><CheckIcon /></span><div><strong>Understand the repair</strong><small>OpenAI GPT-OSS · structured context</small></div></div>
+        <div className="operation-row live"><span className="mini-pulse" /><div><strong>Search public service pages</strong><small>Firecrawl · service evidence + contact</small></div></div>
+        <div className="operation-row"><span>03</span><div><strong>Prepare outreach</strong><small>Only after a public match is found</small></div></div>
+      </div>
     </section>
   );
 }
@@ -311,12 +348,19 @@ function WaitingState({ candidates }: { candidates: ViewCandidate[] }) {
   const failed = candidates.filter((c) => c.outreach?.status === "failed");
   return (
     <section className="waiting-state">
-      <div className="waiting-copy"><p className="eyebrow">Messages sent</p><h2>We’ve asked {sent.length} {sent.length === 1 ? "person" : "people"}.</h2><p>They can reply from ordinary email. Their answers will appear here on their own.</p></div>
-      <div className="waiting-list">
-        {sent.map((candidate) => <div key={candidate._id}><span className="status-dot" /><strong>{candidate.name}</strong><span>Waiting for a reply</span></div>)}
-        {failed.map((candidate) => <div key={candidate._id}><span className="status-dot failed" /><strong>{candidate.name}</strong><span>Message didn’t send</span></div>)}
+      <div className="waiting-copy"><p className="eyebrow">Messages sent</p><h2>Patch is doing the calling around.</h2><p>{sent.length} {sent.length === 1 ? "request is" : "requests are"} out through AgentMail. Nothing shown as price or timing until a person actually replies.</p></div>
+      <div className="outbound-stack">
+        {sent.map((candidate, index) => (
+          <article className="mail-card outbound" key={candidate._id} style={{ ["--stack" as string]: index }}>
+            <div className="mail-kicker"><span>OUT</span><small>AgentMail · sent</small></div>
+            <strong>{candidate.name}</strong>
+            <p>Can you take this repair? When could you come, and roughly what would you charge?</p>
+            <div className="mail-foot"><span>{hostLabel(candidate.website)}</span><span>Waiting for reply</span></div>
+          </article>
+        ))}
+        {failed.map((candidate) => <div className="mail-card failed-mail" key={candidate._id}><strong>{candidate.name}</strong><span>Message didn’t send</span></div>)}
       </div>
-      <div className="waiting-foot">You can leave this page open. Replies will show up here automatically.</div>
+      <div className="waiting-foot"><span className="live-dot" /> Live via Convex — replies appear here without refresh or copy/paste.</div>
     </section>
   );
 }
@@ -326,10 +370,20 @@ function ReplyCard({ candidate, onChoose, busy }: { candidate: ViewCandidate; on
   const unavailable = reply.canTakeJob === false;
   return (
     <article className={`reply-card ${unavailable ? "unavailable" : ""}`}>
-      <div className="reply-top"><div><p className="reply-name">{candidate.name}</p><span>{reply.canTakeJob === true ? "Can take the job" : reply.canTakeJob === false ? "Can’t take this one" : "Reply received"}</span></div>{reply.canTakeJob === true && <span className="human-badge">From their reply</span>}</div>
-      <div className="reply-facts"><div><span>When</span><strong>{reply.arrivalText || "Not stated"}</strong></div><div><span>Price</span><strong>{money(reply.priceAmount, reply.currency)}</strong></div></div>
+      <div className="incoming-mail">
+        <div className="mail-kicker"><span>IN</span><small>Real email reply</small></div>
+        <div className="incoming-head"><strong>{candidate.name}</strong><span>{hostLabel(candidate.website)}</span></div>
+        <p>{reply.rawText}</p>
+      </div>
+      <div className="extraction-line"><span>OpenAI GPT-OSS extracted only stated facts</span><i /></div>
+      <div className="reply-top"><div><p className="reply-name">{candidate.name}</p><span>{reply.canTakeJob === true ? "Can take the job" : reply.canTakeJob === false ? "Can’t take this one" : "Willingness not stated"}</span></div><span className="human-badge">From their reply</span></div>
+      <div className="reply-facts">
+        <div><span>Willingness</span><strong>{reply.canTakeJob === true ? "Yes" : reply.canTakeJob === false ? "No" : "Not stated"}</strong></div>
+        <div><span>When</span><strong>{reply.arrivalText || "Not stated"}</strong></div>
+        <div><span>Price</span><strong>{money(reply.priceAmount, reply.currency)}</strong></div>
+      </div>
       {reply.note && <p className="reply-note">{reply.note}</p>}
-      {reply.extractionStatus === "failed" && <p className="extraction-warning">Patch couldn’t safely pull out the details, so check the original reply below.</p>}
+      {reply.extractionStatus === "failed" && <p className="extraction-warning">Patch couldn’t safely pull out the details, so use the original reply above.</p>}
       <details><summary>Read original reply</summary><blockquote>{reply.rawText}</blockquote></details>
       {!unavailable && <button className="primary" onClick={onChoose} disabled={busy}>{busy ? "Saving…" : `Choose ${candidate.name.split(" ")[0]}`}</button>}
     </article>
@@ -346,12 +400,18 @@ function DoneScreen({ repair, candidate, onNew }: { repair: RepairView["repair"]
   return (
     <main className="done-page">
       <header className="topbar"><Logo /><button className="text-button" onClick={onNew}>New repair</button></header>
+      <ProgressRail status="chosen" />
       <section className="done-card">
         <div className="done-mark"><CheckIcon /></div>
         <p className="eyebrow">Sorted</p>
         <h1>{candidate.name}{reply?.arrivalText ? <> can come <em>{reply.arrivalText}</em>.</> : <> is your choice.</>}</h1>
-        {reply?.priceAmount != null && <p className="done-price">They quoted {money(reply.priceAmount, reply.currency)}.</p>}
-        <div className="done-context"><span>{repair.description}</span><span>{repair.area}</span></div>
+        <div className="decision-receipt">
+          <div><span>Problem</span><strong>{repair.description}</strong></div>
+          <div><span>Provider</span><strong>{candidate.name}</strong></div>
+          <div><span>When they said</span><strong>{reply?.arrivalText || "Not stated"}</strong></div>
+          <div><span>What they quoted</span><strong>{money(reply?.priceAmount ?? null, reply?.currency ?? null)}</strong></div>
+        </div>
+        <p className="receipt-truth">Price and timing came from the person’s reply — Patch did not estimate them.</p>
       </section>
       <p className="done-foot">Patch didn’t book or pay anyone. You made the choice.</p>
     </main>
