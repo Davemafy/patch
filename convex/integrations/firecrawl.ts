@@ -172,6 +172,30 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
       areaMatch = areaTerms.length === 0 || areaTerms.some((term) => homeText.includes(term));
     }
 
+    if (!email) {
+      try {
+        const contactData = await firecrawl("/search", {
+          query: `site:${domain} contact email`,
+          limit: 5,
+          sources: ["web"],
+        });
+        const sameDomain = Array.isArray(contactData?.web)
+          ? contactData.web.filter((item: FirecrawlResult) => safeUrl(item.url)?.hostname.replace(/^www\./, "") === domain)
+          : [];
+        for (const contactResult of sameDomain.slice(0, 3)) {
+          const contactUrl = safeUrl(contactResult.url);
+          if (!contactUrl) continue;
+          const contactPage = await scrape(contactUrl.toString());
+          const contactMarkdown = String(contactPage?.markdown || contactResult.markdown || "");
+          markdown += `\n${contactMarkdown}`;
+          email = emailFrom(contactMarkdown) || email;
+          if (email) break;
+        }
+      } catch {
+        // Contact-page enrichment is best effort; service evidence remains the gate.
+      }
+    }
+
     if (!areaMatch) continue;
     const title = String(page?.metadata?.title || result.title || domain).trim();
     if (!looksLikeDirectProvider(result, title, resultUrl)) continue;
