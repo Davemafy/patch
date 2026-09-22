@@ -527,7 +527,7 @@ function DoneScreen({ repair, candidate, onNew }: { repair: RepairView["repair"]
   return (
     <main className="screen done-page">
       <div className="frame done-frame">
-        <FrameHeader onNew={onNew} dark />
+        <FrameHeader onNew={onNew} />
 
         <section className="done-stage">
           <div className="done-provider"><ProviderMedia candidate={candidate} size="lg" /><span className="qa-label">Chosen</span></div>
@@ -553,7 +553,7 @@ function LoadingShell() {
   return (
     <main className="screen home-page loading-page">
       <div className="frame">
-        <FrameHeader dark />
+        <FrameHeader />
         <div className="loading-word">Patch<span>.</span></div>
       </div>
     </main>
