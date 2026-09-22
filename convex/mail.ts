@@ -19,6 +19,7 @@ export const askRepairPeople = action({
         const result = await sendRepairRequest({
           to: candidate.email,
           repairId: repair._id.toString(),
+          outreachId: outreachId.toString(),
           description: repair.description,
           area: repair.area,
         });
@@ -47,6 +48,7 @@ export const processInbound = action({
     threadId: v.optional(v.string()),
     inReplyTo: v.optional(v.string()),
     rawText: v.string(),
+    extractText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const outreach = await ctx.runQuery(anyApi.repairs.findOutreachForInbound, {
@@ -65,7 +67,7 @@ export const processInbound = action({
       note: null as string | null,
     };
     try {
-      facts = await extractReplyFacts(args.rawText);
+      facts = await extractReplyFacts(args.extractText || args.rawText);
     } catch (error) {
       extractionStatus = "failed";
       extractionError = error instanceof Error ? error.message : "OpenAI extraction failed.";

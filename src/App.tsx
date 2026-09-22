@@ -121,7 +121,7 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
   const createRepair = useMutation(anyApi.repairs.createRepair);
   const generateUploadUrl = useMutation(anyApi.repairs.generateUploadUrl);
   const discover = useAction(anyApi.discovery.findRepairPeople);
-  const [description, setDescription] = useState("My bedroom doorknob is broken. The handle turns but the door won’t open properly.");
+  const [description, setDescription] = useState("");
   const [area, setArea] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -158,7 +158,7 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
       <header className="topbar"><button className="text-button" onClick={onCancel}>Back</button><Logo /><span /></header>
       <form className="report-form" onSubmit={submit}>
         <div className="form-heading"><p className="eyebrow">Start a repair</p><h1>What broke?</h1><p>Describe it the way you’d tell a neighbour. No diagnosis needed.</p></div>
-        <label className="field"><span>What happened</span><textarea rows={5} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1200} required /></label>
+        <label className="field"><span>What happened</span><textarea rows={5} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. My bedroom doorknob is broken. The handle turns but the door won’t open properly." maxLength={1200} required /></label>
         <label className="field"><span>Your area</span><input value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. Wuse 2, Abuja" maxLength={120} required /></label>
         <div className="photo-row">
           <div><strong>Add a photo</strong><span>Optional · up to 5 MB</span></div>
@@ -316,7 +316,7 @@ function WaitingState({ candidates }: { candidates: ViewCandidate[] }) {
         {sent.map((candidate) => <div key={candidate._id}><span className="status-dot" /><strong>{candidate.name}</strong><span>Waiting for a reply</span></div>)}
         {failed.map((candidate) => <div key={candidate._id}><span className="status-dot failed" /><strong>{candidate.name}</strong><span>Message didn’t send</span></div>)}
       </div>
-      <div className="waiting-foot">You can leave this page open. Convex will update it live when a reply arrives.</div>
+      <div className="waiting-foot">You can leave this page open. Replies will show up here automatically.</div>
     </section>
   );
 }

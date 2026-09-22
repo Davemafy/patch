@@ -67,15 +67,17 @@ http.route({
 
     if (payload?.event_type !== "message.received") return new Response("ok", { status: 200 });
     const message = payload?.message || {};
-    const rawText = String(message.extracted_text || message.text || message.preview || "").trim();
+    const rawText = String(message.text || message.extracted_text || message.preview || "").trim();
+    const extractText = String(message.extracted_text || message.text || message.preview || "").trim();
     if (!payload?.event_id || !message?.message_id || !rawText) return new Response("Missing message fields", { status: 400 });
 
-    await ctx.runAction(anyApi.mail.processInbound, {
+    await ctx.scheduler.runAfter(0, anyApi.mail.processInbound, {
       eventId: String(payload.event_id),
       messageId: String(message.message_id),
       threadId: message.thread_id ? String(message.thread_id) : undefined,
       inReplyTo: message.in_reply_to ? String(message.in_reply_to) : undefined,
       rawText,
+      extractText,
     });
     return new Response("ok", { status: 200 });
   }),

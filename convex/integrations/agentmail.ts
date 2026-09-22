@@ -1,6 +1,7 @@
 export async function sendRepairRequest(args: {
   to: string;
   repairId: string;
+  outreachId: string;
   description: string;
   area: string;
 }) {
@@ -25,6 +26,7 @@ export async function sendRepairRequest(args: {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "Idempotency-Key": `patch-${args.outreachId}`.replace(/[^A-Za-z0-9._~-]/g, "-"),
     },
     body: JSON.stringify({
       to: args.to,
