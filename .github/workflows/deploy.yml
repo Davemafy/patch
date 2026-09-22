@@ -18,12 +18,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check deployment key
-        if: env.CONVEX_DEPLOY_KEY == ''
-        run: echo "Convex deployment skipped because CONVEX_DEPLOY_KEY is not configured."
+      - name: Require Convex deployment key
+        shell: bash
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "::error::Add the production Convex deploy key as the repository secret CONVEX_DEPLOY_KEY."
+            exit 1
+          fi
       - name: Install
-        if: env.CONVEX_DEPLOY_KEY != ''
         run: npm install --no-audit --no-fund
       - name: Deploy Patch
-        if: env.CONVEX_DEPLOY_KEY != ''
         run: npm run deploy
