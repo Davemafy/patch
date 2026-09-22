@@ -44,7 +44,7 @@ jobs:
           test "$webhook_status" = "401"
           grep -q 'Invalid webhook signature' /tmp/webhook.txt
       - name: Manual live GPT-OSS and Firecrawl discovery
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[sponsor-smoke]')
         shell: bash
         run: |
           repair_id="$(npx convex run repairs:createRepair '{"description":"My bedroom doorknob is broken. The handle turns but the door won’t open properly.","area":"Abuja"}' | tr -d '"\r\n')"
