@@ -26,6 +26,7 @@ export default defineSchema({
     name: v.string(),
     website: v.string(),
     email: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
     serviceEvidence: v.string(),
     sourceUrl: v.string(),
     sourceTitle: v.optional(v.string()),
