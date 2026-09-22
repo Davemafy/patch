@@ -573,3 +573,31 @@ blockquote { margin: 14px 0 0; padding: 16px 18px; border-left: 2px solid #bbb7a
     box-shadow: 0 10px 35px rgba(22,23,20,.18);
   }
 }
+
+
+@media (max-width: 760px) {
+  .repair-head h1 {
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: -.04em;
+  }
+  .progress-rail {
+    grid-template-columns: repeat(5, 1fr);
+    overflow: visible;
+  }
+  .progress-step {
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    padding: 11px 2px 12px;
+    text-align: center;
+  }
+  .progress-step strong {
+    font-size: 9px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+  }
+}
