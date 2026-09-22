@@ -40,7 +40,7 @@ homePage.on("console", (message) => {
   if (message.type() === "error" && !/favicon/i.test(message.text())) consoleErrors.push(`desktop-home: ${message.text()}`);
 });
 await homePage.goto(PATCH_URL, { waitUntil: "networkidle" });
-await homePage.locator("h1").filter({ hasText: /Something/ }).waitFor({ timeout: 30000 });
+await homePage.locator(".hero-copy h1").waitFor({ timeout: 30000 });
 snapshots.desktopHome = await assertNoOverflow(homePage, "desktop home");
 await homePage.screenshot({ path: "desktop-home.png", fullPage: true });
 await homeContext.close();
@@ -81,7 +81,7 @@ const mobileHomeContext = await browser.newContext({ viewport: { width: 390, hei
 const mobileHome = await mobileHomeContext.newPage();
 mobileHome.on("pageerror", (error) => pageErrors.push(`mobile-home: ${String(error)}`));
 await mobileHome.goto(PATCH_URL, { waitUntil: "networkidle" });
-await mobileHome.locator("h1").filter({ hasText: /Something/ }).waitFor({ timeout: 30000 });
+await mobileHome.locator(".hero-copy h1").waitFor({ timeout: 30000 });
 snapshots.mobileHome = await assertNoOverflow(mobileHome, "mobile home");
 await mobileHome.screenshot({ path: "mobile-home.png", fullPage: true });
 await mobileHomeContext.close();
