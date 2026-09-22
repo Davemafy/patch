@@ -120,7 +120,9 @@ See `docs/DEMO.md` for the exact recording sequence.
 
 ## Public app
 
-Not deployed yet. The final URL is produced by the production Convex Static Hosting deploy.
+https://aware-porpoise-430.convex.site
+
+This URL is served directly by Convex Static Hosting and is the recording/submission target.
 
 ## Known limitations
 

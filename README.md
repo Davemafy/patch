@@ -131,6 +131,10 @@ npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
 
 The reset is token-protected and clears Patch’s demo data only. It does not change AgentMail, Firecrawl, or OpenAI configuration.
 
+## Live app
+
+https://aware-porpoise-430.convex.site
+
 ## Recording
 
 See [`docs/DEMO.md`](docs/DEMO.md) for the 90-second recording sequence and failure checks.
