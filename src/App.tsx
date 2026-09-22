@@ -110,7 +110,6 @@ function FrameHeader({ onNew, dark = false }: { onNew?: () => void; dark?: boole
 
 function App() {
   const [activeRepairId, setActiveRepairId] = useState<string | null>(() => localStorage.getItem(ACTIVE_REPAIR_KEY));
-  const [reporting, setReporting] = useState(false);
   const repairView = useQuery(
     anyApi.repairs.getRepair,
     activeRepairId ? { repairId: activeRepairId } : "skip",
@@ -126,62 +125,15 @@ function App() {
   }, [repairView]);
 
   if (!activeRepairId) {
-    return reporting ? (
-      <ReportScreen
-        onCancel={() => setReporting(false)}
-        onCreated={(id) => {
-          setActiveRepairId(id);
-          setReporting(false);
-        }}
-      />
-    ) : <HomeScreen onStart={() => setReporting(true)} />;
+    return <NewRepairScreen onCreated={(id) => setActiveRepairId(id)} />;
   }
 
   if (repairView === undefined) return <LoadingShell />;
-  if (!repairView) return <HomeScreen onStart={() => setReporting(true)} />;
+  if (!repairView) return <NewRepairScreen onCreated={(id) => setActiveRepairId(id)} />;
   return <RepairScreen view={repairView} onNew={() => setActiveRepairId(null)} />;
 }
 
-function HomeScreen({ onStart }: { onStart: () => void }) {
-  return (
-    <main className="screen home-page">
-      <div className="frame home-frame">
-        <FrameHeader dark />
-        <section className="home-stage">
-          <div className="hero-copy">
-            <h1>Something broke.<br /><em>We’ll make the calls.</em></h1>
-            <p>Tell Patch once. We find people who actually handle it, ask for price and timing, and bring their replies back to you.</p>
-            <button className="hero-action" onClick={onStart}>Start a repair <Arrow /></button>
-          </div>
-
-          <div className="story" aria-label="Example Patch conversation">
-            <div className="story-entry story-you">
-              <span>You</span>
-              <p>Bedroom doorknob turns, but the door won’t open.</p>
-            </div>
-            <div className="story-entry">
-              <span>Patch</span>
-              <p>Found people who repair door hardware. Asking now.</p>
-            </div>
-            <div className="story-entry story-reply">
-              <span>Reply</span>
-              <blockquote>“Tomorrow afternoon. Callout is ₦12,000.”</blockquote>
-            </div>
-            <p className="story-foot">Real people. Real replies. Nothing filled in by Patch.</p>
-          </div>
-        </section>
-
-        <footer className="home-signature">
-          <span>Search less.</span>
-          <span>Call nobody.</span>
-          <span>Choose from what people actually said.</span>
-        </footer>
-      </div>
-    </main>
-  );
-}
-
-function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated: (id: string) => void }) {
+function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
   const createRepair = useMutation(anyApi.repairs.createRepair);
   const generateUploadUrl = useMutation(anyApi.repairs.generateUploadUrl);
   const discover = useAction(anyApi.discovery.findRepairPeople);
@@ -221,58 +173,58 @@ function ReportScreen({ onCancel, onCreated }: { onCancel: () => void; onCreated
   }
 
   return (
-    <main className="screen paper-screen report-page">
-      <div className="frame">
-        <header className="masthead">
-          <button className="quiet-action" onClick={onCancel}>Back</button>
-          <div className="masthead-rule" />
-          <Mark />
-        </header>
+    <main className="screen paper-screen new-repair-page">
+      <div className="frame product-frame">
+        <FrameHeader />
 
-        <section className="report-layout">
-          <div className="report-prompt">
-            <h1>Say it like you’d text a friend.</h1>
-            <p>No categories. No diagnosis. Just what happened and where you are.</p>
+        <section className="new-repair-shell">
+          <div className="new-repair-heading">
+            <h1>What needs fixing?</h1>
+            <p>Describe the problem once. Patch will find people who handle it and ask them for a real price and time.</p>
           </div>
 
-          <form className="report-card" onSubmit={submit}>
-            <label className="editorial-field">
-              <span>What happened?</span>
+          <form className="new-repair-form" onSubmit={submit}>
+            <label className="product-field problem-field">
+              <span>Problem</span>
               <textarea
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="My bedroom doorknob is broken. The handle turns but the door won’t open properly."
+                placeholder="My bedroom doorknob turns, but the door won’t open."
                 maxLength={1200}
                 required
+                autoFocus
               />
             </label>
 
-            <label className="editorial-field">
-              <span>Where?</span>
-              <input
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                placeholder="Wuse 2, Abuja"
-                maxLength={120}
-                required
-              />
-            </label>
+            <div className="new-repair-row">
+              <label className="product-field area-field">
+                <span>Area</span>
+                <input
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="Wuse 2, Abuja"
+                  maxLength={120}
+                  required
+                />
+              </label>
 
-            <div className="photo-line">
-              <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
-              <button type="button" onClick={() => photoInput.current?.click()}>{photo ? "Change photo" : "Add a photo"}</button>
-              <span>{photo ? photo.name : "Optional"}</span>
+              <div className="photo-control">
+                <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+                <button type="button" onClick={() => photoInput.current?.click()}>{photo ? "Change photo" : "Add photo"}</button>
+                {photo && <span>{photo.name}</span>}
+              </div>
             </div>
 
             {photo && <button type="button" className="remove-photo" onClick={() => setPhoto(null)}>Remove photo</button>}
             {error && <p className="inline-error">{error}</p>}
 
-            <button className="submit-repair" disabled={busy}>
-              {busy ? "Starting…" : <>Find someone <Arrow /></>}
-            </button>
-
-            <p className="truth-line">Patch leaves price, time and availability blank until a person says them.</p>
+            <div className="new-repair-actions">
+              <p>Price, timing and availability stay blank until a provider actually replies.</p>
+              <button className="submit-repair" disabled={busy}>
+                {busy ? "Finding people…" : <>Find repair people <Arrow /></>}
+              </button>
+            </div>
           </form>
         </section>
       </div>
@@ -363,8 +315,8 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
         {peopleFound && (
           <section className="results-v2 provider-section">
             <div className="section-open">
-              <h2>{shownCandidates.length === 1 ? "One person worth asking." : `${shownCandidates.length} people worth asking.`}</h2>
-              <p>These are direct matches we can reach. No one is marked available until they reply.</p>
+              <h2>{shownCandidates.length === 1 ? "1 match" : `${shownCandidates.length} matches`}</h2>
+              <p>Public service evidence says they handle this kind of work. Availability only comes from a reply.</p>
             </div>
 
             <div className="provider-list">
@@ -411,8 +363,8 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
         {replies.length > 0 && (
           <section className="reply-section">
             <div className="section-open">
-              <h2>Replies are in.</h2>
-              <p>Patch only pulls out what was actually stated. Missing details stay missing.</p>
+              <h2>{replies.length} {replies.length === 1 ? "reply" : "replies"}</h2>
+              <p>Compare what each person actually said. Missing details stay missing.</p>
             </div>
 
             <div className="reply-list">
@@ -427,8 +379,8 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
         )}
 
         <details className="system-proof">
-          <summary>How Patch got here</summary>
-          <p>Search evidence comes from public pages. Outreach runs through AgentMail. Replies land in Convex and are conservatively extracted by OpenAI GPT-OSS served through Groq.</p>
+          <summary>How matching works</summary>
+          <p>Patch checks public service pages for fit, contacts reachable providers, and only shows price, timing or availability when a provider says it in a reply.</p>
         </details>
       </div>
     </main>
@@ -473,12 +425,12 @@ function LookingState() {
   return (
     <section className="looking-state">
       <div className="looking-title">
-        <h2>Looking for the right person.<br /><em>Not the longest list.</em></h2>
+        <h2>Finding people who handle this.</h2>
       </div>
       <div className="search-sequence">
-        <div><span>1</span><p>Understand what kind of repair this actually is.</p></div>
-        <div className="is-live"><span>2</span><p>Check direct service pages and public contact details.</p></div>
-        <div><span>3</span><p>Keep only people we can justify asking.</p></div>
+        <div><span>1</span><p>Understand the repair.</p></div>
+        <div className="is-live"><span>2</span><p>Check direct service pages.</p></div>
+        <div><span>3</span><p>Keep reachable matches.</p></div>
       </div>
     </section>
   );
@@ -490,9 +442,8 @@ function WaitingState({ candidates }: { candidates: ViewCandidate[] }) {
   return (
     <section className="waiting-state">
       <div className="section-open waiting-open">
-        <span className="qa-label">Messages sent</span>
-        <h2>Now we wait for humans.</h2>
-        <p>{sent.length} {sent.length === 1 ? "request is" : "requests are"} out. Patch won’t manufacture a quote while we wait.</p>
+        <h2>Asked {sent.length} {sent.length === 1 ? "person" : "people"}</h2>
+        <p>Replies appear here automatically. Patch won’t fill in price or timing unless they actually say it.</p>
       </div>
 
       <div className="sent-list">
