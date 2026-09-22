@@ -1,4 +1,4 @@
-// Production visual acceptance for the content-led consumer Patch UI.
+// Production visual acceptance for the flattened repair entry.
 import { execFileSync } from "node:child_process";
 import { chromium } from "playwright";
 
