@@ -20,6 +20,7 @@ export type RepairPersonCandidate = {
   name: string;
   website: string;
   email?: string;
+  imageUrl?: string;
   serviceEvidence: string;
   sourceUrl: string;
 };
