@@ -68,9 +68,9 @@ function hostLabel(value: string) {
 function ProgressRail({ status }: { status: RepairView["repair"]["status"] }) {
   const stages = [
     ["reported", "Reported"],
-    ["looking", "Sources found"],
+    ["looking", "Found"],
     ["waiting", "Asked"],
-    ["options_ready", "Reply received"],
+    ["options_ready", "Reply"],
     ["chosen", "Chosen"],
   ] as const;
   const order = ["reported", "looking", "waiting", "options_ready", "chosen"];
