@@ -134,6 +134,17 @@ The live deployment has been exercised against the real sponsor stack:
 - A controlled inbound reply, explicitly labeled as test data, traverses the same webhook → Convex → GPT-OSS extraction → live React subscription path used by real replies.
 - The external provider contacted during acceptance had not replied during the test window, so Patch does not claim a real price, time, availability, or willingness from that provider.
 
+## Acceptance evidence
+
+The live deployment has been exercised against the real sponsor stack:
+
+- OpenAI GPT-OSS through Groq produced repair search context for the broken-doorknob example.
+- Firecrawl returned real source-backed repair-service candidates.
+- AgentMail successfully sent a real outreach email to a discovered direct provider.
+- The public `/agentmail/webhook` route rejects unsigned requests and accepts correctly signed controlled acceptance events.
+- A controlled inbound reply, explicitly labeled as test data, traverses the same webhook → Convex → GPT-OSS extraction → live React subscription path used by real replies.
+- The external provider contacted during acceptance had not replied during the test window, so Patch does not claim a real price, time, availability, or willingness from that provider.
+
 ## Known limitations
 
 - Patch currently uses email outreach only; a candidate needs a public email address to be contactable from the app.
