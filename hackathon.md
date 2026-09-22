@@ -1,36 +1,129 @@
-# Patch — All Gas Hackathon
+# Patch — Convex All Gas Hackathon
 
-## What it does
+## What Patch does
 
-Patch helps an everyday person handle a small home repair without calling around. The user explains what broke, Patch finds people who publicly handle that kind of repair, asks them for their actual price and time, brings their replies back into the app, and lets the user choose.
+Something broke at home? Tell Patch. It finds a small number of people whose public websites say they handle that kind of repair, asks them for their actual price and time, brings their real email replies back into the app, and lets the user choose.
+
+Patch is deliberately not a contractor directory or an AI diagnosis screen. The useful part is the loop between a normal person with a broken thing and the real people who might fix it.
 
 ## Demo journey
 
-**Tell Patch what broke → find repair people → ask for price/time → receive replies → choose someone.**
+`describe the repair → find relevant people → ask for price/time → receive real replies → choose someone`
 
-## Sponsor services
+Primary demo:
 
-- **Convex** — source of truth for repairs, candidates, outreach, replies, selection, and live updates.
-- **Firecrawl** — discovers public repair businesses and source-backed service evidence.
-- **AgentMail** — sends ordinary requests and receives ordinary email replies, so repair people need no Patch account.
-- **OpenAI** — turns the user's description into a useful repair request and extracts only price/time/availability facts that are actually present in a reply.
+> My bedroom doorknob is broken. The handle turns but the door won’t open properly.
+
+The moment I care about is when a repair person replies from ordinary email and the Patch screen changes on its own. No copy/paste back into the app.
+
+## How the sponsor stack is used
+
+### Convex
+
+Convex is the source of truth for repairs, discovered candidates, public evidence, outreach attempts, inbound replies, extracted facts, the final choice, uploaded repair photos, and event history. The React app reads the repair through a live Convex query, so an inbound email reply changes the UI without polling or local fake state.
+
+The backend also owns the duplicate-safety rules:
+
+- one outreach record per candidate prevents repeated button presses from sending the same request twice;
+- inbound AgentMail `event_id` and `message_id` are both deduplicated;
+- a late reply is stored but never changes a repair that the user already marked chosen.
+
+The frontend is deployed with Convex Static Hosting so the submission lives on the required `*.convex.site` URL.
+
+### Firecrawl
+
+Patch sends Firecrawl a search query derived from the user’s repair description and area. It searches the public web, scrapes a small set of promising pages, extracts public contact emails when present, and keeps the source URL plus a short line of service evidence.
+
+Firecrawl evidence is used only for service fit: “this site says they do door/lock repair.” It is never treated as evidence of live availability or price.
+
+### AgentMail
+
+Patch has a real AgentMail inbox. For selected candidates it sends a plain email asking whether they can take the job, when they could come, and roughly what they would charge. The recipient needs no Patch account.
+
+AgentMail sends `message.received` webhooks to:
+
+`https://<deployment>.convex.site/api/agentmail/webhook`
+
+The webhook is verified with its Svix signature before the message is processed. Patch correlates the inbound thread to the original outreach and records it once.
+
+### OpenAI
+
+OpenAI performs two narrow interpretation jobs:
+
+1. Turn a consumer repair description into a useful service category/search query for Firecrawl.
+2. Extract only facts actually stated in a repair-person reply: whether they can take the job, the arrival wording, price, currency, and any explicit condition.
+
+The raw reply is always preserved. If extraction fails, Patch records the original message and leaves the structured facts empty instead of inventing an answer.
 
 ## Truth boundary
 
-A public website can show that someone handles a kind of repair. It does not prove they are available or what they will charge. Patch only shows availability, price, and acceptance after a real reply establishes those facts.
+Patch intentionally has two evidence layers:
 
-## Build status
+**Public website:** can establish that a person/business exists, what service they publicly advertise, their public contact details, and possibly their stated service area.
 
-Bootstrap complete. Implementation lanes are in progress.
+**Actual repair-person reply:** can establish current willingness to take this job, timing, price, and explicit conditions.
+
+A website never makes someone “available” in Patch. A model never fills in a missing price or time.
+
+## Reliability work
+
+- duplicate inbound webhooks are idempotent;
+- duplicate outreach clicks do not produce duplicate sends;
+- late replies cannot overwrite the chosen person;
+- OpenAI extraction failure preserves the raw email;
+- Firecrawl failure produces a retryable human state instead of crashing;
+- candidates without a public email remain visible as source-backed matches but cannot be selected for email outreach;
+- missing server secrets fail with an actionable message;
+- active repair state survives browser refresh via a persisted repair id, while the actual repair data stays in Convex.
+
+## Setup
+
+```bash
+npm install
+npx convex dev
+npm run dev
+```
+
+Set the following on the Convex deployment:
+
+```text
+OPENAI_API_KEY
+OPENAI_MODEL=gpt-5-mini
+FIRECRAWL_API_KEY
+AGENTMAIL_API_KEY
+AGENTMAIL_INBOX_ID
+AGENTMAIL_WEBHOOK_SECRET
+DEMO_RESET_TOKEN
+```
+
+For local Vite development, Convex writes `VITE_CONVEX_URL` to `.env.local`.
+
+Create an AgentMail webhook for `message.received` pointing at the deployment’s `/api/agentmail/webhook` route.
+
+## Deploy
+
+```bash
+npm run deploy
+```
+
+This builds the Vite frontend, deploys the Convex backend, uploads the static files to Convex Static Hosting, and produces the required `https://<deployment>.convex.site` URL.
 
 ## Demo reset
 
-The lead will document a deterministic demo reset here before submission.
+```bash
+npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
+```
+
+This clears Patch repair/candidate/outreach/reply/event data while leaving external credentials and webhook configuration intact.
+
+See `docs/DEMO.md` for the exact recording sequence.
 
 ## Public app
 
-TBD
+Not deployed yet. The final URL is produced by the production Convex Static Hosting deploy.
 
-## Demo video
+## Known limitations
 
-TBD
+- Patch currently uses email outreach only; a candidate needs a public email address to be contactable from the app.
+- Discovery quality depends on what local repair businesses publish on the public web.
+- Patch does not book, pay, message in-app, rate contractors, or diagnose the repair.
