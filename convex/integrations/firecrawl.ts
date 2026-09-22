@@ -137,7 +137,8 @@ function evidenceFrom(content: string, category: string, fallback: string): stri
 
 function providerName(title: string, domain: string, metadata: any) {
   const rawName = title.split(/[|–—-]/)[0]?.trim() || "";
-  if (rawName && !/^(home|welcome|services?|contact us?)$/i.test(rawName)) return rawName;
+  const marketingTitle = /^(transform|discover|explore|get|find|shop|quality|affordable|professional)\b/i.test(rawName);
+  if (rawName && rawName.length <= 46 && !marketingTitle && !/^(home|welcome|services?|contact us?)$/i.test(rawName)) return rawName;
 
   const siteName = String(metadata?.ogSiteName || metadata?.siteName || metadata?.["og:site_name"] || "").trim();
   if (siteName && !/^(home|welcome|services?)$/i.test(siteName)) return siteName;
