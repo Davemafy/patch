@@ -88,12 +88,12 @@ snapshots.desktopReply = await assertNoOverflow(page, "desktop reply");
 await page.screenshot({ path: "desktop-reply.png", fullPage: true });
 
 await page.getByRole("button", { name: /^Choose / }).click();
-await page.getByText("Sorted").waitFor({ timeout: 30000 });
+await page.getByText("Chosen").waitFor({ timeout: 30000 });
 snapshots.desktopChosen = await assertNoOverflow(page, "desktop chosen");
 await page.screenshot({ path: "desktop-chosen.png", fullPage: true });
 
 await page.reload({ waitUntil: "networkidle" });
-await page.getByText("Sorted").waitFor({ timeout: 30000 });
+await page.getByText("Chosen").waitFor({ timeout: 30000 });
 snapshots.desktopReloaded = await assertNoOverflow(page, "desktop reloaded chosen");
 await desktop.close();
 
@@ -123,7 +123,7 @@ mobilePage.on("console", (message) => {
   if (message.type() === "error" && !/favicon/i.test(message.text())) consoleErrors.push(`mobile: ${message.text()}`);
 });
 await mobilePage.goto(PATCH_URL, { waitUntil: "networkidle" });
-await mobilePage.getByText("Sorted").waitFor({ timeout: 30000 });
+await mobilePage.getByText("Chosen").waitFor({ timeout: 30000 });
 snapshots.mobileChosen = await assertNoOverflow(mobilePage, "mobile chosen");
 await mobilePage.screenshot({ path: "mobile-chosen.png", fullPage: true });
 await mobile.close();
