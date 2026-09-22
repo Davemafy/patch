@@ -89,7 +89,7 @@ function evidenceFor(category: string | undefined, evidence: string) {
 }
 
 function Mark() {
-  return <span className="mark" aria-label="Patch"><i />Patch</span>;
+  return <span className="mark" aria-label="Patch">Patch</span>;
 }
 
 function ProviderMedia({ candidate, size = "md" }: { candidate: ViewCandidate; size?: "sm" | "md" | "lg" }) {
@@ -192,26 +192,26 @@ function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
 
         <section className="new-repair-shell">
           <div className="new-repair-heading">
-            <h1>What broke?</h1>
-            <p>Tell Patch once. We’ll find people who actually handle it and bring their replies back here.</p>
+            <h1>What needs fixing?</h1>
+            <p>Describe the problem and where you are. Patch handles the searching and outreach.</p>
           </div>
 
           <form className="new-repair-form" onSubmit={submit}>
-            <label className="product-field problem-field">
-              <span>Describe it</span>
+            <label className="repair-composer">
+              <span>Problem</span>
               <textarea
-                rows={5}
+                rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="My bedroom doorknob turns, but the door won’t open."
+                placeholder="Bedroom doorknob turns, but the door won’t open."
                 maxLength={1200}
                 required
                 autoFocus
               />
             </label>
 
-            <div className="new-repair-row">
-              <label className="product-field area-field">
+            <div className="repair-utilities">
+              <label className="utility-field">
                 <span>Area</span>
                 <input
                   value={area}
@@ -222,7 +222,7 @@ function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
                 />
               </label>
 
-              <div className="photo-control">
+              <div className="utility-photo">
                 <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
                 <button type="button" onClick={() => photoInput.current?.click()}>{photo ? "Change photo" : "Add photo"}</button>
                 {photo && <span>{photo.name}</span>}
@@ -232,12 +232,10 @@ function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
             {photo && <button type="button" className="remove-photo" onClick={() => setPhoto(null)}>Remove photo</button>}
             {error && <p className="inline-error">{error}</p>}
 
-            <div className="new-repair-actions">
-              <p>Price, timing and availability stay blank until a provider actually replies.</p>
-              <button className="submit-repair" disabled={busy}>
-                {busy ? "Finding people…" : <>Find someone <Arrow /></>}
-              </button>
-            </div>
+            <button className="submit-repair" disabled={busy}>
+              {busy ? "Finding repair people…" : <>Find repair people <Arrow /></>}
+            </button>
+            <p className="form-footnote">Patch only shows price, timing or availability after a provider actually says it.</p>
           </form>
         </section>
       </div>
