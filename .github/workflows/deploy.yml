@@ -22,10 +22,12 @@ jobs:
         shell: bash
         run: |
           if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "::error::Add the production Convex deploy key as the repository secret CONVEX_DEPLOY_KEY."
+            echo "::error::Add the Convex deploy key as the repository secret CONVEX_DEPLOY_KEY."
             exit 1
           fi
       - name: Install
         run: npm install --no-audit --no-fund
-      - name: Deploy Patch
-        run: npm run deploy
+      - name: Deploy Convex backend
+        run: npx convex deploy
+      - name: Upload hosted frontend
+        run: npx @convex-dev/static-hosting upload --build --component staticHosting
