@@ -9,6 +9,7 @@ type ViewCandidate = {
   name: string;
   website: string;
   email?: string;
+  imageUrl?: string;
   serviceEvidence: string;
   sourceUrl: string;
   chosen: boolean;
@@ -87,7 +88,18 @@ function evidenceFor(category: string | undefined, evidence: string) {
 }
 
 function Mark() {
-  return <span className="mark" aria-label="Patch">Patch<span>.</span></span>;
+  return <span className="mark" aria-label="Patch"><i />Patch</span>;
+}
+
+function ProviderMedia({ candidate, size = "md" }: { candidate: ViewCandidate; size?: "sm" | "md" | "lg" }) {
+  const label = providerLabel(candidate.name, candidate.website);
+  return candidate.imageUrl ? (
+    <img className={`provider-media provider-media-${size}`} src={candidate.imageUrl} alt="" />
+  ) : (
+    <div className={`provider-media provider-media-${size} provider-fallback`} aria-hidden="true">
+      {label.slice(0, 1).toUpperCase()}
+    </div>
+  );
 }
 
 function Arrow() {
@@ -98,12 +110,12 @@ function Tick() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>;
 }
 
-function FrameHeader({ onNew, dark = false }: { onNew?: () => void; dark?: boolean }) {
+function FrameHeader({ onNew }: { onNew?: () => void }) {
   return (
-    <header className={`masthead ${dark ? "masthead-dark" : ""}`}>
+    <header className="masthead">
       <Mark />
-      <div className="masthead-rule" />
-      {onNew ? <button className="quiet-action" onClick={onNew}>New repair</button> : <span className="masthead-note">Repair concierge</span>}
+      <div className="masthead-spacer" />
+      {onNew ? <button className="quiet-action" onClick={onNew}>Start another</button> : <span className="masthead-note">Get a real reply, not a guess.</span>}
     </header>
   );
 }
@@ -179,13 +191,13 @@ function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
 
         <section className="new-repair-shell">
           <div className="new-repair-heading">
-            <h1>What needs fixing?</h1>
-            <p>Describe the problem once. Patch will find people who handle it and ask them for a real price and time.</p>
+            <h1>What broke?</h1>
+            <p>Tell Patch once. We’ll find people who actually handle it and bring their replies back here.</p>
           </div>
 
           <form className="new-repair-form" onSubmit={submit}>
             <label className="product-field problem-field">
-              <span>Problem</span>
+              <span>Describe it</span>
               <textarea
                 rows={5}
                 value={description}
@@ -222,7 +234,7 @@ function NewRepairScreen({ onCreated }: { onCreated: (id: string) => void }) {
             <div className="new-repair-actions">
               <p>Price, timing and availability stay blank until a provider actually replies.</p>
               <button className="submit-repair" disabled={busy}>
-                {busy ? "Finding people…" : <>Find repair people <Arrow /></>}
+                {busy ? "Finding people…" : <>Find someone <Arrow /></>}
               </button>
             </div>
           </form>
@@ -296,10 +308,12 @@ function RepairScreen({ view, onNew }: { view: RepairView; onNew: () => void }) 
       <div className="frame">
         <FrameHeader onNew={onNew} />
 
-        <section className="repair-intro">
-          <span>{repair.area}</span>
-          <h1>{repair.description}</h1>
-          {repair.photoUrl && <img src={repair.photoUrl} alt="Repair" />}
+        <section className={`repair-intro ${repair.photoUrl ? "has-photo" : ""}`}>
+          {repair.photoUrl && <img className="repair-photo" src={repair.photoUrl} alt="Repair" />}
+          <div className="repair-copy">
+            <span>{repair.area}</span>
+            <h1>{repair.description}</h1>
+          </div>
         </section>
 
         {finding && <LookingState />}
@@ -405,13 +419,16 @@ function ProviderRow({
   const evidence = evidenceFor(category, candidate.serviceEvidence);
   return (
     <article className={`provider-row ${selected ? "is-selected" : ""}`}>
-      <span className="provider-index">{String(index + 1).padStart(2, "0")}</span>
+      <ProviderMedia candidate={candidate} size="lg" />
       <div className="provider-body">
-        <a className="provider-name" href={candidate.sourceUrl} target="_blank" rel="noreferrer">{displayName}</a>
-        {evidence && <p className="provider-evidence">“{evidence}”</p>}
-        <div className="provider-meta">
+        <div className="provider-heading">
+          <a className="provider-name" href={candidate.sourceUrl} target="_blank" rel="noreferrer">{displayName}</a>
           <span>{hostLabel(candidate.website)}</span>
-          <span>{canContact ? "Reachable by email" : "No public email"}</span>
+        </div>
+        {evidence && <p className="provider-evidence">{evidence}</p>}
+        <div className="provider-meta">
+          <span>{canContact ? "Public contact found" : "No public email"}</span>
+          <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">View source</a>
         </div>
       </div>
       <button className="provider-toggle" onClick={onToggle} disabled={!canContact} aria-pressed={selected} aria-label={selected ? `Remove ${displayName}` : `Ask ${displayName}`}>
@@ -425,12 +442,11 @@ function LookingState() {
   return (
     <section className="looking-state">
       <div className="looking-title">
-        <h2>Finding people who handle this.</h2>
+        <span className="live-dot" />
+        <div><h2>Finding repair people nearby</h2><p>Checking real service pages and public contact details.</p></div>
       </div>
-      <div className="search-sequence">
-        <div><span>1</span><p>Understand the repair.</p></div>
-        <div className="is-live"><span>2</span><p>Check direct service pages.</p></div>
-        <div><span>3</span><p>Keep reachable matches.</p></div>
+      <div className="provider-skeletons" aria-hidden="true">
+        {[0, 1, 2].map((item) => <div className="provider-skeleton" key={item}><i /><span /><b /></div>)}
       </div>
     </section>
   );
@@ -447,11 +463,11 @@ function WaitingState({ candidates }: { candidates: ViewCandidate[] }) {
       </div>
 
       <div className="sent-list">
-        {sent.map((candidate, index) => (
+        {sent.map((candidate) => (
           <div className="sent-line" key={candidate._id}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <strong>{candidate.name}</strong>
-            <em>Request delivered</em>
+            <ProviderMedia candidate={candidate} size="sm" />
+            <div><strong>{providerLabel(candidate.name, candidate.website)}</strong><span>Request sent</span></div>
+            <em>Waiting for reply</em>
           </div>
         ))}
         {failed.map((candidate) => (
@@ -472,11 +488,11 @@ function ReplyBlock({ candidate, onChoose, busy }: { candidate: ViewCandidate; o
   return (
     <article className={`reply-block ${unavailable ? "is-unavailable" : ""}`}>
       <div className="reply-provider">
-        <span>{hostLabel(candidate.website)}</span>
-        <h3>{providerLabel(candidate.name, candidate.website)}</h3>
+        <ProviderMedia candidate={candidate} size="sm" />
+        <div><h3>{providerLabel(candidate.name, candidate.website)}</h3><span>{hostLabel(candidate.website)}</span></div>
       </div>
 
-      <blockquote className="reply-quote">“{reply.rawText}”</blockquote>
+      <blockquote className="reply-quote">{reply.rawText}</blockquote>
 
       <div className="reply-facts">
         <div><span>Can take it?</span><strong>{reply.canTakeJob === true ? "Yes" : reply.canTakeJob === false ? "No" : "Not stated"}</strong></div>
@@ -514,7 +530,7 @@ function DoneScreen({ repair, candidate, onNew }: { repair: RepairView["repair"]
         <FrameHeader onNew={onNew} dark />
 
         <section className="done-stage">
-          <span className="qa-label">Sorted</span>
+          <div className="done-provider"><ProviderMedia candidate={candidate} size="lg" /><span className="qa-label">Chosen</span></div>
           <h1>{providerLabel(candidate.name, candidate.website)}</h1>
           <p className="done-line">
             {reply?.arrivalText ? <>said <em>{reply.arrivalText}</em></> : <>is your choice</>}
