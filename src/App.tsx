@@ -60,12 +60,13 @@ function providerLabel(name: string, website: string) {
 
   const stem = hostLabel(website).split(".")[0] || trimmed;
   const spaced = stem
-    .replace(/(handyman|plumbing|plumber|locksmith|repairs?|services?|doors?|electric|electrical|design|mart)/gi, " $1 ")
+    .replace(/(handyman|plumbing|plumber|locksmith|repairs?|services?|doors?|electric|electrical|design|mart|cctv|security|channel)/gi, " $1 ")
     .replace(/[-_]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-  return spaced.replace(/\b\w/g, (char) => char.toUpperCase()) || trimmed;
+  const titled = spaced.replace(/\b\w/g, (char) => char.toUpperCase());
+  return titled.replace(/\bCctv\b/g, "CCTV") || trimmed;
 }
 
 function evidenceFor(category: string | undefined, evidence: string) {
