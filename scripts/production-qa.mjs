@@ -1,4 +1,4 @@
-// Production visual acceptance for the editorial concierge submission UI.
+// Production visual acceptance for the industrial Patch visual system.
 import { execFileSync } from "node:child_process";
 import { chromium } from "playwright";
 
