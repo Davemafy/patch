@@ -131,11 +131,25 @@ async function scrape(url: string) {
   }
 }
 
+function contactUrlFrom(markdown: string, origin: string) {
+  const matches = markdown.matchAll(/\[([^\]]*contact[^\]]*)\]\(([^)]+)\)/gi);
+  for (const match of matches) {
+    try {
+      const url = new URL(match[2], origin);
+      if (url.origin === origin) return url.toString();
+    } catch {
+      // Ignore malformed links.
+    }
+  }
+  return new URL("/contact", origin).toString();
+}
+
 export async function findRepairPeople(searchQuery: string, category: string, area: string): Promise<DiscoveredPerson[]> {
+  // Keep one discovery comfortably inside Firecrawl's free-tier request window:
+  // two searches + at most six scrapes = eight requests.
   const queries = [
     searchQuery,
-    `${area} ${category} handyman contact email`,
-    `${area} ${category} company contact`,
+    `${area} ${category} repair service contact`,
   ];
   const results: FirecrawlResult[] = [];
   for (const query of queries) {
@@ -143,66 +157,58 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
     if (Array.isArray(data?.web)) results.push(...data.web);
   }
 
+  let scrapeBudget = 6;
+  async function limitedScrape(url: string) {
+    if (scrapeBudget <= 0) return null;
+    scrapeBudget -= 1;
+    return scrape(url);
+  }
+
   const seen = new Set<string>();
   const people: DiscoveredPerson[] = [];
 
   for (const result of results) {
-    if (people.length >= 4) break;
+    if (people.length >= 3 || scrapeBudget <= 0) break;
     const resultUrl = safeUrl(result.url);
     if (!resultUrl || !isProviderHost(resultUrl.hostname)) continue;
+
     const domain = resultUrl.hostname.replace(/^www\./, "");
     if (seen.has(domain)) continue;
+
+    // Reject obvious directories/listicles before spending a scrape.
+    const searchTitle = String(result.title || domain).trim();
+    if (!looksLikeDirectProvider(result, searchTitle, resultUrl)) continue;
     seen.add(domain);
 
-    const page = await scrape(resultUrl.toString());
+    const page = await limitedScrape(resultUrl.toString());
     let markdown = String(page?.markdown || result.markdown || "");
-    let email = emailFrom(markdown);
+    const title = String(page?.metadata?.title || result.title || domain).trim();
+    if (!looksLikeDirectProvider(result, title, resultUrl)) continue;
+
     const areaTerms = area
       .toLowerCase()
       .split(/[^a-z0-9]+/)
       .filter((term) => term.length > 3);
-    const firstPassText = `${markdown}\n${result.description || ""}\n${result.title || ""}`.toLowerCase();
-    let areaMatch = areaTerms.length === 0 || areaTerms.some((term) => firstPassText.includes(term));
-
-    if ((!email || !areaMatch) && resultUrl.pathname !== "/") {
-      const home = await scrape(resultUrl.origin);
-      if (home?.markdown) markdown += `\n${home.markdown}`;
-      email = email || emailFrom(markdown);
-      const homeText = markdown.toLowerCase();
-      areaMatch = areaTerms.length === 0 || areaTerms.some((term) => homeText.includes(term));
-    }
-
-    if (!email) {
-      try {
-        const contactData = await firecrawl("/search", {
-          query: `site:${domain} contact email`,
-          limit: 5,
-          sources: ["web"],
-        });
-        const sameDomain = Array.isArray(contactData?.web)
-          ? contactData.web.filter((item: FirecrawlResult) => safeUrl(item.url)?.hostname.replace(/^www\./, "") === domain)
-          : [];
-        for (const contactResult of sameDomain.slice(0, 3)) {
-          const contactUrl = safeUrl(contactResult.url);
-          if (!contactUrl) continue;
-          const contactPage = await scrape(contactUrl.toString());
-          const contactMarkdown = String(contactPage?.markdown || contactResult.markdown || "");
-          markdown += `\n${contactMarkdown}`;
-          email = emailFrom(contactMarkdown) || email;
-          if (email) break;
-        }
-      } catch {
-        // Contact-page enrichment is best effort; service evidence remains the gate.
-      }
-    }
-
+    const evidenceText = `${markdown}\n${result.description || ""}\n${result.title || ""}`.toLowerCase();
+    const areaMatch = areaTerms.length === 0 || areaTerms.some((term) => evidenceText.includes(term));
     if (!areaMatch) continue;
-    const title = String(page?.metadata?.title || result.title || domain).trim();
-    if (!looksLikeDirectProvider(result, title, resultUrl)) continue;
+
     const evidence = evidenceFrom(markdown, category, result.description || title);
     if (!evidence) continue;
+
+    let email = emailFrom(markdown);
+    if (!email && scrapeBudget > 0) {
+      const contactUrl = contactUrlFrom(markdown, resultUrl.origin);
+      const contactPage = await limitedScrape(contactUrl);
+      const contactMarkdown = String(contactPage?.markdown || "");
+      markdown += `\n${contactMarkdown}`;
+      email = emailFrom(contactMarkdown);
+    }
+
     const rawName = title.split(/[|–—-]/)[0]?.trim() || domain;
-    const name = /^(home|welcome|services?|contact us?)$/i.test(rawName) ? domain.split(".")[0] : rawName;
+    const name = /^(home|welcome|services?|contact us?)$/i.test(rawName)
+      ? domain.split(".")[0]
+      : rawName;
 
     people.push({
       name: name.slice(0, 90),
@@ -216,3 +222,4 @@ export async function findRepairPeople(searchQuery: string, category: string, ar
 
   return people;
 }
+
