@@ -35,18 +35,14 @@ const snapshots = {};
 
 const homeContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const homePage = await homeContext.newPage();
-homePage.on("pageerror", (error) => pageErrors.push(`desktop-home: ${String(error)}`));
+homePage.on("pageerror", (error) => pageErrors.push(`desktop-new-repair: ${String(error)}`));
 homePage.on("console", (message) => {
-  if (message.type() === "error" && !/favicon/i.test(message.text())) consoleErrors.push(`desktop-home: ${message.text()}`);
+  if (message.type() === "error" && !/favicon/i.test(message.text())) consoleErrors.push(`desktop-new-repair: ${message.text()}`);
 });
 await homePage.goto(PATCH_URL, { waitUntil: "networkidle" });
-await homePage.locator(".hero-copy h1").waitFor({ timeout: 30000 });
-snapshots.desktopHome = await assertNoOverflow(homePage, "desktop home");
-await homePage.screenshot({ path: "desktop-home.png", fullPage: true });
-await homePage.getByRole("button", { name: "Start a repair" }).click();
-await homePage.locator(".report-card").waitFor({ timeout: 30000 });
-snapshots.desktopReport = await assertNoOverflow(homePage, "desktop report");
-await homePage.screenshot({ path: "desktop-report.png", fullPage: true });
+await homePage.locator(".new-repair-shell").waitFor({ timeout: 30000 });
+snapshots.desktopNewRepair = await assertNoOverflow(homePage, "desktop new repair");
+await homePage.screenshot({ path: "desktop-new-repair.png", fullPage: true });
 await homeContext.close();
 
 // Reuse a persisted real Firecrawl discovery from the live deployment for visual QA.
@@ -77,13 +73,13 @@ page.on("console", (message) => {
   if (message.type() === "error" && !/favicon/i.test(message.text())) consoleErrors.push(`desktop: ${message.text()}`);
 });
 await page.goto(PATCH_URL, { waitUntil: "networkidle" });
-await page.getByText("Messages sent").waitFor({ timeout: 30000 });
+await page.getByText(/^Asked \d+ /).waitFor({ timeout: 30000 });
 snapshots.desktopWaiting = await assertNoOverflow(page, "desktop waiting");
 await page.screenshot({ path: "desktop-waiting.png", fullPage: true });
 
 runConvex("acceptance:deliverWebhookFixture", { repairId, candidateId });
 
-await page.getByText("Replies are in").waitFor({ timeout: 60000 });
+await page.getByText(/^\d+ repl(?:y|ies)$/).waitFor({ timeout: 60000 });
 await page.getByText("tomorrow afternoon", { exact: false }).first().waitFor({ timeout: 30000 });
 await page.getByText("12,000", { exact: false }).first().waitFor({ timeout: 30000 });
 await page.getByText("Read original reply").click();
@@ -103,15 +99,11 @@ await desktop.close();
 
 const mobileHomeContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const mobileHome = await mobileHomeContext.newPage();
-mobileHome.on("pageerror", (error) => pageErrors.push(`mobile-home: ${String(error)}`));
+mobileHome.on("pageerror", (error) => pageErrors.push(`mobile-new-repair: ${String(error)}`));
 await mobileHome.goto(PATCH_URL, { waitUntil: "networkidle" });
-await mobileHome.locator(".hero-copy h1").waitFor({ timeout: 30000 });
-snapshots.mobileHome = await assertNoOverflow(mobileHome, "mobile home");
-await mobileHome.screenshot({ path: "mobile-home.png", fullPage: true });
-await mobileHome.getByRole("button", { name: "Start a repair" }).click();
-await mobileHome.locator(".report-card").waitFor({ timeout: 30000 });
-snapshots.mobileReport = await assertNoOverflow(mobileHome, "mobile report");
-await mobileHome.screenshot({ path: "mobile-report.png", fullPage: true });
+await mobileHome.locator(".new-repair-shell").waitFor({ timeout: 30000 });
+snapshots.mobileNewRepair = await assertNoOverflow(mobileHome, "mobile new repair");
+await mobileHome.screenshot({ path: "mobile-new-repair.png", fullPage: true });
 await mobileHomeContext.close();
 
 const mobileResultsContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
