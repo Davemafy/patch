@@ -55,15 +55,15 @@ DEMO_RESET_TOKEN
 
 Do not put sponsor keys in `VITE_*` variables. Anything prefixed with `VITE_` is browser-visible.
 
-Set production values with the Convex dashboard or CLI, for example:
+Set server-side values on the Convex deployment used by the app, for example:
 
 ```bash
-npx convex env set GROQ_API_KEY "..." --prod
-npx convex env set FIRECRAWL_API_KEY "..." --prod
-npx convex env set AGENTMAIL_API_KEY "..." --prod
-npx convex env set AGENTMAIL_INBOX_ID "..." --prod
-npx convex env set AGENTMAIL_WEBHOOK_SECRET "..." --prod
-npx convex env set DEMO_RESET_TOKEN "..." --prod
+npx convex env set GROQ_API_KEY "..."
+npx convex env set FIRECRAWL_API_KEY "..."
+npx convex env set AGENTMAIL_API_KEY "..."
+npx convex env set AGENTMAIL_INBOX_ID "..."
+npx convex env set AGENTMAIL_WEBHOOK_SECRET "..."
+npx convex env set DEMO_RESET_TOKEN "..."
 ```
 
 ## AgentMail setup
@@ -116,7 +116,7 @@ npm run build
 npm run deploy
 ```
 
-`@convex-dev/static-hosting` builds the frontend with the production Convex URL, deploys the backend, uploads `dist/`, and serves the app from:
+`@convex-dev/static-hosting` builds the frontend with the configured live Convex URL, deploys the backend, uploads `dist/`, and serves the app from:
 
 ```text
 https://<deployment>.convex.site
@@ -125,10 +125,10 @@ https://<deployment>.convex.site
 ## Demo reset
 
 ```bash
-npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
+npx convex run repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'
 ```
 
-The reset is token-protected and clears Patch’s demo data only. It does not change AgentMail, Firecrawl, or Groq/OpenAI-model configuration.
+The reset is optional and only works when `DEMO_RESET_TOKEN` is configured. It clears Patch’s demo data only; it does not change AgentMail, Firecrawl, or Groq/OpenAI-model configuration.
 
 ## Live app
 
