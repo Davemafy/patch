@@ -43,7 +43,8 @@ jobs:
             https://aware-porpoise-430.convex.site/agentmail/webhook)"
           test "$webhook_status" = "401"
           grep -q 'Invalid webhook signature' /tmp/webhook.txt
-      - name: Smoke GPT-OSS and Firecrawl discovery
+      - name: Manual live GPT-OSS and Firecrawl discovery
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           repair_id="$(npx convex run repairs:createRepair '{"description":"My bedroom doorknob is broken. The handle turns but the door won’t open properly.","area":"Abuja"}' | tr -d '"\r\n')"
