@@ -1,33 +1,18 @@
-name: apply-and-build
+name: build
 
 on:
   push:
     branches: [main]
-
-permissions:
-  contents: write
+  pull_request:
 
 jobs:
-  apply-payload:
+  frontend-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply Patch implementation payload
-        if: ${{ hashFiles('.patch-ready') != '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat .patch-payload.part* | base64 -d > /tmp/patch-payload.tgz
-          tar -xzf /tmp/patch-payload.tgz -C .
-          git checkout -- .github/workflows/ci.yml
-          rm -f .patch-ready .patch-payload.part*
-          git config user.name "Patch build bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Implement Patch end-to-end"
-            git push
-          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Install
         run: npm install --no-audit --no-fund
       - name: Build
