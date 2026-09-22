@@ -4,17 +4,17 @@ Target: 80–100 seconds. Show the product, not the architecture.
 
 ## Before recording
 
-1. Confirm the production `*.convex.site` app loads in a private browser window.
-2. Confirm `GROQ_API_KEY`, `FIRECRAWL_API_KEY`, `AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `AGENTMAIL_WEBHOOK_SECRET`, and `DEMO_RESET_TOKEN` are set on the production Convex deployment.
+1. Confirm the live `*.convex.site` app loads in a private browser window.
+2. Confirm `GROQ_API_KEY`, `FIRECRAWL_API_KEY`, `AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `AGENTMAIL_WEBHOOK_SECRET`, and `DEMO_RESET_TOKEN` are set on the live Convex deployment.
 3. In AgentMail, subscribe a webhook to `message.received` at:
 
    `https://<deployment>.convex.site/agentmail/webhook`
 
-4. Reset old demo data:
+4. If `DEMO_RESET_TOKEN` is configured, reset old demo data:
 
-   `npx convex run --prod repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'`
+   `npx convex run repairs:resetDemo '{"token":"<DEMO_RESET_TOKEN>"}'`
 
-5. Have access to one real recipient mailbox you are allowed to use for the recording, or choose a discovered business you genuinely intend to contact. Do not seed a fake reply into real mode.
+5. Have access to one real recipient mailbox you are allowed to use for the recording, or choose a discovered business you genuinely intend to contact. Do not seed a controlled/fake reply into the real demo and present it as a contractor response.
 
 ## Recording sequence
 
