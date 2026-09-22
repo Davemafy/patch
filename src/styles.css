@@ -151,7 +151,7 @@ blockquote { margin: 14px 0 0; padding: 16px 18px; border-left: 2px solid #bbb7a
   .topbar { min-height: 68px; }
   .top-note { display: none; }
   .hero { grid-template-columns: 1fr; align-items: start; gap: 54px; padding: 72px 0 64px; }
-  .hero-copy h1 { font-size: clamp(68px, 22vw, 110px); }
+  .hero-copy h1 { font-size: clamp(64px, 20vw, 104px); overflow-wrap: anywhere; }
   .lede { font-size: 19px; margin: 26px 0 28px; }
   .primary.big { width: 100%; }
   .examples { border-left: 0; }
