@@ -58,4 +58,4 @@ jobs:
           echo "Discovery category: $category"
           echo "Discovery query: $query"
           echo "Candidates: $candidate_count; contactable: $contactable_count"
-          printf '%s' "$view" | jq -r '.candidates[] | "\(.name) | \(.sourceUrl) | contactable=\(.email != null and .email != \"\")"'
+          printf '%s' "$view" | jq -r '.candidates[] | [.name, .sourceUrl, ((.email // "") != "")] | @tsv'
